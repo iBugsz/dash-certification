@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
-import { Poppins } from 'next/font/google'; // Cambiamos a Poppins
+import { Poppins } from 'next/font/google';
 import './globals.css';
+import { ThemeProvider } from "@/components/providers/ThemeProvider"; //
 
 const poppins = Poppins({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700', '800', '900'],
   variable: '--font-poppins',
 });
 
@@ -17,9 +18,18 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es" className={`${poppins.variable} h-full antialiased`}>
-      <body className="font-poppins bg-[#F4F7FE] text-[#1B2559]">
-        {children}
+    /* 1. Añadimos suppressHydrationWarning para que Next.js no se queje 
+       al cambiar entre temas de luz y oscuridad en el cliente. */
+    <html 
+      lang="es" 
+      className={`${poppins.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <body className="font-poppins transition-colors duration-300">
+        {/* 2. Envolvemos toda la aplicación con el Provider */}
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

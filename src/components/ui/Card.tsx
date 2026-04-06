@@ -8,10 +8,10 @@ export const Card = ({
   className?: string;
 }) => (
   <div
-    className={`bg-white p-6 rounded-[24px] shadow-sm border border-slate-100 ${className}`}
+    className={`bg-[var(--card)] p-6 rounded-[24px] shadow-sm border border-[var(--border)] transition-colors ${className}`}
   >
     {title && (
-      <h3 className="text-slate-500 font-semibold text-sm mb-4 uppercase tracking-wider">
+      <h3 className="text-slate-500 dark:text-slate-400 font-semibold text-sm mb-4 uppercase tracking-wider">
         {title}
       </h3>
     )}

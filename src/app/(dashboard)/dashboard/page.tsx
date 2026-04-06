@@ -1,158 +1,229 @@
-import { Card } from '@/components/ui/Card';
-import { TrendingUp, FileCheck, AlertCircle, Building2 } from 'lucide-react';
+"use client";
 
-export default function DashboardPage() {
+import { motion } from "framer-motion";
+import {
+  Building2,
+  Layout,
+  FileCheck,
+  HardDrive,
+  TrendingUp,
+} from "lucide-react";
+
+import { useDashboardData } from "@/hooks/useDashboardData";
+import { formatBytes } from "@/lib/dashboard/utils";
+import { StatCard } from "@/components/features/dashboard/StatCard";
+import { StorageDonut } from "@/components/features/dashboard/StorageDonut";
+import { BucketBars } from "@/components/features/dashboard/BucketBars";
+import { ActivityFeed } from "@/components/features/dashboard/ActivityFeed";
+import { ServiceGrid } from "@/components/features/dashboard/ServiceGrid";
+import { MiniBarChart } from "@/components/features/dashboard/MiniBarChart";
+
+// ─── Section wrapper ──────────────────────────────────────────────────────────
+// Usa --card y --border del globals.css → funciona en light y dark automáticamente
+function Section({
+  title,
+  children,
+  className = "",
+  delay = 0,
+}: {
+  title?: string;
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+}) {
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
-      <header className="flex justify-between items-end">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-800">Dashboard</h1>
-          <p className="text-slate-500">Resumen del sistema de homologación</p>
-        </div>
-        <div className="text-right">
-          <p className="text-sm font-medium text-slate-400">
-            Estado del Sistema
-          </p>
-          <span className="text-green-500 font-bold flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />{' '}
-            Operativo
-          </span>
-        </div>
-      </header>
-
-      {/* Grid Superior */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card title="Eficiencia de Generación">
-          <div className="flex flex-col items-center py-4">
-            <div className="relative h-32 w-32 flex items-center justify-center border-[10px] border-purple-100 rounded-full border-t-purple-600 rotate-45">
-              <span className="text-3xl font-bold text-slate-800 -rotate-45">
-                84%
-              </span>
-            </div>
-            <p className="mt-4 text-sm text-slate-400">
-              Certificados validados hoy
-            </p>
-          </div>
-        </Card>
-
-        <Card title="Estadísticas">
-          <div className="space-y-4">
-            <StatItem label="Empresas Activas" value="12" color="bg-blue-500" />
-            <StatItem label="Plantillas Word" value="5" color="bg-purple-500" />
-            <StatItem
-              label="Certificados Mes"
-              value="1,280"
-              color="bg-emerald-500"
-            />
-            <StatItem label="Errores Excel" value="2" color="bg-red-500" />
-          </div>
-        </Card>
-
-        <Card title="Uso de Almacenamiento (Supabase)">
-          <div className="flex flex-col items-center py-4">
-            <div className="relative h-32 w-32 flex items-center justify-center">
-              <svg className="w-full h-full transform -rotate-90">
-                <circle
-                  cx="64"
-                  cy="64"
-                  r="58"
-                  stroke="currentColor"
-                  strokeWidth="10"
-                  fill="transparent"
-                  className="text-slate-100"
-                />
-                <circle
-                  cx="64"
-                  cy="64"
-                  r="58"
-                  stroke="currentColor"
-                  strokeWidth="10"
-                  fill="transparent"
-                  strokeDasharray={364}
-                  strokeDashoffset={364 - 364 * 0.53}
-                  className="text-purple-500"
-                />
-              </svg>
-              <span className="absolute text-2xl font-bold">53%</span>
-            </div>
-            <p className="mt-4 text-sm text-slate-400 italic">
-              Storage ocupado
-            </p>
-          </div>
-        </Card>
-      </div>
-
-      {/* Listado de Últimas Acciones (Similar a la imagen) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card title="Últimos Certificados Generados">
-          <div className="divide-y divide-slate-100">
-            {[
-              {
-                user: 'Transportes Global S.A.',
-                desc: 'Camión Volvo FH16',
-                date: 'Hace 5 min',
-                amount: 'S/ 150.0',
-              },
-              {
-                user: 'Logística del Norte',
-                desc: 'Remolque de carga',
-                date: 'Hace 12 min',
-                amount: 'S/ 75.0',
-              },
-              {
-                user: 'Inversiones S.R.L.',
-                desc: 'Bus Interprovincial',
-                date: 'Hace 1 hora',
-                amount: 'S/ 210.0',
-              },
-            ].map((item, i) => (
-              <div key={i} className="py-4 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`h-10 w-10 rounded-full flex items-center justify-center text-white ${i === 0 ? 'bg-purple-500' : 'bg-slate-300'}`}
-                  >
-                    <FileCheck size={18} />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-slate-800">{item.user}</p>
-                    <p className="text-xs text-slate-400">
-                      {item.desc} • {item.date}
-                    </p>
-                  </div>
-                </div>
-                <span className="font-bold text-slate-700">{item.amount}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        <Card title="Pendientes de Homologación">
-          <div className="flex items-center justify-center h-48 text-slate-300 flex-col">
-            <Building2 size={48} className="mb-2 opacity-20" />
-            <p>No hay solicitudes pendientes</p>
-          </div>
-        </Card>
-      </div>
-    </div>
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, delay, ease: "easeOut" }}
+      className={`rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 ${className}`}
+    >
+      {title && (
+        <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--foreground)] opacity-40 mb-4">
+          {title}
+        </p>
+      )}
+      {children}
+    </motion.div>
   );
 }
 
-function StatItem({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: string;
-  color: string;
-}) {
+// ─── Page ─────────────────────────────────────────────────────────────────────
+export default function DashboardPage() {
+  const d = useDashboardData();
+
+  const totalUsedBytes = d.dbUsedBytes + d.storageUsedBytes;
+  const totalLimitBytes = d.dbLimitBytes + d.storageLimitBytes;
+
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <div className={`h-2 w-2 rounded-full ${color}`} />
-        <span className="text-sm text-slate-600">{label}</span>
+    // Sin bg propio — hereda --background del body via globals.css
+    <div className="p-6 lg:p-8 space-y-6">
+      {/* ── Header ── */}
+      <motion.header
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="flex items-end justify-between flex-wrap gap-4"
+      >
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-black tracking-tight text-[var(--foreground)]">
+            Panel de Control
+          </h1>
+          <p className="text-sm mt-1 text-[var(--foreground)] opacity-40">
+            XcelDoc · Supabase Free Tier · sa-east-1
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 rounded-xl">
+          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-emerald-600 dark:text-emerald-400 text-xs font-bold tracking-wider uppercase">
+            Sistema Operativo
+          </span>
+        </div>
+      </motion.header>
+
+      {/* ── Stat Cards ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Empresas"
+          value={d.loading ? "—" : d.companies}
+          sub="registradas"
+          icon={Building2}
+          accent="from-blue-500 to-cyan-500"
+          delay={0.05}
+        />
+        <StatCard
+          label="Plantillas"
+          value={d.loading ? "—" : d.templates}
+          sub="activas"
+          icon={Layout}
+          accent="from-indigo-500 to-violet-500"
+          delay={0.1}
+        />
+        <StatCard
+          label="Generaciones"
+          value={d.loading ? "—" : d.totalCertificates.toLocaleString()}
+          sub="certificados"
+          icon={FileCheck}
+          accent="from-emerald-500 to-teal-500"
+          delay={0.15}
+        />
+        <StatCard
+          label="Espacio Total"
+          value={d.loading ? "—" : formatBytes(totalUsedBytes)}
+          sub={`de ${formatBytes(totalLimitBytes)} · Free`}
+          icon={HardDrive}
+          accent="from-amber-500 to-orange-500"
+          delay={0.2}
+        />
       </div>
-      <span className="font-bold text-slate-800">{value}</span>
+
+      {/* ── Main grid ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Storage donuts + buckets — span 2 */}
+        <Section
+          title="Almacenamiento · Supabase"
+          className="lg:col-span-2"
+          delay={0.25}
+        >
+          <div className="flex flex-col gap-6">
+            {/* Tres donuts */}
+            <div className="flex items-start justify-around flex-wrap gap-8 py-2">
+              <StorageDonut
+                label="Base de Datos"
+                usedBytes={d.dbUsedBytes}
+                limitBytes={d.dbLimitBytes}
+                color="#6366f1"
+                delay={0.3}
+              />
+              <StorageDonut
+                label="Object Storage"
+                usedBytes={d.storageUsedBytes}
+                limitBytes={d.storageLimitBytes}
+                color="#22d3ee"
+                delay={0.4}
+              />
+              <StorageDonut
+                label="Total Combinado"
+                usedBytes={totalUsedBytes}
+                limitBytes={totalLimitBytes}
+                color="#a78bfa"
+                delay={0.5}
+              />
+            </div>
+
+            <div className="border-t border-[var(--border)]" />
+
+            {/* Buckets */}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--foreground)] opacity-30 mb-3">
+                Desglose por bucket
+              </p>
+              <BucketBars
+                buckets={d.buckets}
+                totalLimit={d.storageLimitBytes}
+              />
+            </div>
+          </div>
+        </Section>
+
+        {/* Servicios + DB schemas */}
+        <Section title="Servicios Supabase" delay={0.3}>
+          <ServiceGrid />
+
+          <div className="border-t border-[var(--border)] my-4" />
+
+          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--foreground)] opacity-30 mb-3">
+            DB Schemas
+          </p>
+          {[
+            { label: "auth.*", bytes: 385_024 },
+            { label: "storage.*", bytes: 147_456 },
+            { label: "public.*", bytes: 98_304 },
+          ].map((row, i) => (
+            <div key={row.label} className="flex items-center gap-2 mb-2">
+              <span className="text-[10px] font-mono text-[var(--foreground)] opacity-50 w-20">
+                {row.label}
+              </span>
+              <div className="flex-1 bg-[var(--border)] rounded-full h-1 overflow-hidden">
+                <motion.div
+                  className="h-1 rounded-full bg-violet-500"
+                  initial={{ width: 0 }}
+                  animate={{
+                    width: `${Math.round((row.bytes / 630_784) * 100)}%`,
+                  }}
+                  transition={{ duration: 1, delay: i * 0.1 + 0.4 }}
+                />
+              </div>
+              <span className="text-[10px] font-mono text-[var(--foreground)] opacity-40 w-14 text-right">
+                {formatBytes(row.bytes)}
+              </span>
+            </div>
+          ))}
+        </Section>
+      </div>
+
+      {/* ── Bottom grid ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Gráfico semanal */}
+        <Section delay={0.35}>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--foreground)] opacity-40">
+              Generaciones · Últimos 7 días
+            </p>
+            <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+              <TrendingUp size={13} />
+              <span className="text-[10px] font-bold">+12% vs semana ant.</span>
+            </div>
+          </div>
+          <MiniBarChart color="#6366f1" />
+        </Section>
+
+        {/* Actividad reciente */}
+        <Section title="Actividad Reciente" delay={0.4}>
+          <ActivityFeed items={d.recentTemplates} />
+        </Section>
+      </div>
     </div>
   );
 }
