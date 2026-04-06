@@ -32,10 +32,12 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   return (
     <aside
       onClick={() => isCollapsed && setIsCollapsed(false)}
+      // Solo cambia esta línea en el className del <aside>:
       className={`
       app-sidebar
+      hidden md:flex          // ← ÚNICA línea nueva
       h-screen fixed left-0 top-0 z-50
-      flex flex-col
+      flex-col
       transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]
       overflow-visible
       ${isCollapsed ? "w-[52px] cursor-pointer" : "w-[220px]"}
