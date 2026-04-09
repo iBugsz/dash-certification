@@ -115,6 +115,9 @@ export function useCertificates() {
     setProcessError(null);
 
     try {
+      if (!selectedTemplate.file_url) {
+        throw new Error("La plantilla seleccionada no tiene una URL de archivo válida.");
+      }
       const responseTemplate = await fetch(selectedTemplate.file_url);
       if (!responseTemplate.ok) throw new Error("No se pudo conectar con el servidor de plantillas.");
       const content = await responseTemplate.arrayBuffer();
