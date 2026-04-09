@@ -14,4 +14,5 @@ export interface Template {
   description: string | null;
   file_name: string;
   file_url: string | null;
+  mapping: any;
 }
