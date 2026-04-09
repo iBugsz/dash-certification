@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus, Search, FileX } from "lucide-react";
+import { Plus, Search, FileX, AlertTriangle, Trash2, X } from "lucide-react";
 import { useTemplates } from "@/hooks/useTemplates";
 import TemplateRow from "@/components/features/templates/TemplateRow";
 import TemplateRowSkeleton from "@/components/features/templates/TemplateRowSkeleton";
@@ -24,6 +24,16 @@ export default function TemplatesPage() {
   const [selectedTemplateForMapping, setSelectedTemplateForMapping] =
     useState<Template | null>(null);
 
+  // Estado para Edición
+  const [templateToEdit, setTemplateToEdit] = useState<Template | null>(null);
+
+  // Estado para Borrado
+  const [templateToDelete, setTemplateToDelete] = useState<{
+    id: string;
+    path: string;
+    name: string;
+  } | null>(null);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     if (!q) return templates;
@@ -34,8 +44,34 @@ export default function TemplatesPage() {
     );
   }, [templates, search]);
 
+  const handleConfirmDelete = async () => {
+    if (templateToDelete) {
+      await deleteTemplate(templateToDelete.id, templateToDelete.path);
+      setTemplateToDelete(null);
+    }
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const newName = formData.get("name") as string;
+
+    if (templateToEdit && newName) {
+      // Aquí podrías llamar a una función updateTemplate si la tienes en el hook
+      console.log(
+        "Actualizando plantilla:",
+        templateToEdit.id,
+        "a nombre:",
+        newName,
+      );
+      // Por ahora cerramos el modal
+      setTemplateToEdit(null);
+    }
+  };
+
   return (
     <div className="w-full max-w-screen-2xl mx-auto p-4 md:p-8 space-y-8 text-slate-900 dark:text-slate-100">
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-slate-100">
@@ -54,6 +90,7 @@ export default function TemplatesPage() {
         </button>
       </div>
 
+      {/* Buscador */}
       <div className="relative max-w-md">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
         <input
@@ -65,6 +102,7 @@ export default function TemplatesPage() {
         />
       </div>
 
+      {/* Tabla */}
       <div className="bg-[var(--card)] rounded-[24px] shadow-sm border border-[var(--border)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
@@ -104,8 +142,11 @@ export default function TemplatesPage() {
                   <TemplateRow
                     key={template.id}
                     template={template}
-                    onDelete={deleteTemplate}
+                    onDelete={(id, path) =>
+                      setTemplateToDelete({ id, path, name: template.name })
+                    }
                     onMappingClick={(t) => setSelectedTemplateForMapping(t)}
+                    onEditClick={(t) => setTemplateToEdit(t)} // <--- AHORA ABRE EL MODAL
                   />
                 ))
               )}
@@ -114,6 +155,7 @@ export default function TemplatesPage() {
         </div>
       </div>
 
+      {/* MODAL: SUBIR */}
       {showModal && (
         <TemplateUploadModal
           uploading={uploading}
@@ -122,12 +164,113 @@ export default function TemplatesPage() {
         />
       )}
 
+      {/* MODAL: MAPEO */}
       {selectedTemplateForMapping && (
         <MappingModal
           template={selectedTemplateForMapping}
           onClose={() => setSelectedTemplateForMapping(null)}
           onSave={updateTemplateMapping}
         />
+      )}
+
+      {/* MODAL: EDITAR INFORMACIÓN */}
+      {templateToEdit && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[28px] shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-200">
+            <form onSubmit={handleSaveEdit}>
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                    Editar Plantilla
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setTemplateToEdit(null)}
+                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                  >
+                    <X className="w-5 h-5 text-slate-400" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                      Nombre de la plantilla
+                    </label>
+                    <input
+                      name="name"
+                      type="text"
+                      autoFocus
+                      defaultValue={templateToEdit.name}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-accent outline-none transition-all"
+                    />
+                  </div>
+                  <div className="p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-xl">
+                    <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed italic">
+                      Nota: Cambiar el nombre aquí solo afecta cómo se ve en el
+                      dashboard. El archivo físico conservará su nombre
+                      original.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 p-6 bg-slate-50 dark:bg-slate-800/50">
+                <button
+                  type="button"
+                  onClick={() => setTemplateToEdit(null)}
+                  className="flex-1 px-4 py-3 rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-3 rounded-xl font-semibold bg-accent text-white hover:bg-accent-dark shadow-lg shadow-accent/30 transition-all"
+                >
+                  Guardar cambios
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: CONFIRMACIÓN BORRADO */}
+      {templateToDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[28px] shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 text-center">
+              <div className="mx-auto w-16 h-16 bg-red-50 dark:bg-red-950/30 rounded-full flex items-center justify-center mb-4">
+                <AlertTriangle className="w-8 h-8 text-red-500" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">
+                ¿Eliminar plantilla?
+              </h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm">
+                Estás a punto de eliminar{" "}
+                <span className="font-semibold text-slate-700 dark:text-slate-200">
+                  "{templateToDelete.name}"
+                </span>
+                . Esta acción no se puede deshacer.
+              </p>
+            </div>
+            <div className="flex gap-3 p-6 bg-slate-50 dark:bg-slate-800/50">
+              <button
+                onClick={() => setTemplateToDelete(null)}
+                className="flex-1 px-4 py-3 rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="flex-1 px-4 py-3 rounded-xl font-semibold bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/30 transition-all flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

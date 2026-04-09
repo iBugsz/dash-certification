@@ -5,49 +5,56 @@ import { createClient } from "@supabase/supabase-js";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 export async function POST(request: Request) {
   try {
-    // 1. Inicializamos Supabase DENTRO del POST. 
-    // Así solo se ejecuta cuando alguien realmente llama a la API.
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error("Missing Supabase environment variables");
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
 
     if (!file) {
-      return NextResponse.json({ error: "No se recibió el archivo mapeado" }, { status: 400 });
+      return NextResponse.json({ error: "No se recibió el archivo" }, { status: 400 });
     }
 
-    // 2. Convertimos el archivo que generó tu sistema a Buffer
     const wordBuffer = Buffer.from(await file.arrayBuffer());
 
-    // 3. Se lo pasamos al converter
+    // 1. Intentamos la conversión primero
+    console.log("⏳ Llamando a Adobe...");
     const pdfBuffer = await convertWordToPdf(wordBuffer);
 
-    // 4. Registramos el uso (RPC o insert)
-    await supabase.rpc("increment_adobe_usage");
+    // 2. Si llegamos aquí, Adobe NO falló. 
+    // Ahora validamos que el buffer tenga contenido real.
+    if (!pdfBuffer || pdfBuffer.length === 0) {
+      throw new Error("Adobe devolvió un PDF vacío.");
+    }
 
-    // 5. Retornamos el PDF usando Uint8Array para evitar el error de tipos
-    return new NextResponse(new Uint8Array(pdfBuffer), {
+    // 3. SOLO SI LA CONVERSIÓN FUE EXITOSA, aumentamos el contador
+    console.log("✅ Conversión exitosa, actualizando Supabase...");
+    const { error: rpcError } = await supabase.rpc("increment_adobe_usage");
+    
+    if (rpcError) {
+      console.warn("⚠️ El PDF se hizo pero no se pudo subir el contador:", rpcError);
+      // Opcional: No lanzamos error para que el usuario al menos reciba su PDF
+    }
+
+    // 4. Enviamos la respuesta
+    return new NextResponse(pdfBuffer, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="certificado_mapeado_${Date.now()}.pdf"`,
+        "Content-Disposition": `attachment; filename="certificado_${Date.now()}.pdf"`,
       },
     });
 
   } catch (error: any) {
-    console.error("Error en convert-to-pdf:", error);
-    return NextResponse.json(
-      { error: error.message || "Error al convertir" }, 
-      { status: 500 }
-    );
+    console.error("❌ Error crítico en convert-to-pdf:", error);
+    // Si entra aquí, Supabase NUNCA se enteró, por lo tanto no sube el contador.
+    return NextResponse.json({ 
+      error: "Error en el servidor de PDF", 
+      details: error.message 
+    }, { status: 500 });
   }
 }

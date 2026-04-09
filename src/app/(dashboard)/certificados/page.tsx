@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react"; // Necesario para manejar las imágenes
 import {
   Download,
   Loader2,
@@ -7,6 +8,9 @@ import {
   FileSearch,
   FileCheck,
   RefreshCw,
+  ImagePlus,
+  ImageIcon,
+  CheckCircle2,
 } from "lucide-react";
 import { useCertificates } from "@/hooks/useCertificates";
 import { CertificateSelectors } from "@/components/features/certificates/CertificateSelectors";
@@ -39,6 +43,23 @@ export default function CertificatesPage() {
     handleDownload,
   } = useCertificates();
 
+  // --- LÓGICA DE IMÁGENES ---
+  const [imageFiles, setImageFiles] = useState<Record<string, File>>({});
+
+  // Detectamos etiquetas de tipo "image" en el mapeo de Supabase
+  const imageTags = selectedTemplate?.mapping
+    ? Object.entries(selectedTemplate.mapping)
+        .filter(([_, value]: any) => value.type === "image")
+        .map(([key, value]: any) => ({ tag: key, label: value.label }))
+    : [];
+
+  const handleImageUpload = (tag: string, file: File) => {
+    setImageFiles((prev) => ({ ...prev, [tag]: file }));
+  };
+
+  // Validar si faltan imágenes antes de analizar
+  const missingImages = imageTags.some((img) => !imageFiles[img.tag]);
+
   return (
     <div className="w-full max-w-(--breakpoint-2xl) mx-auto p-4 md:p-8 space-y-6 font-poppins text-slate-900 dark:text-slate-100">
       {/* Header */}
@@ -52,14 +73,15 @@ export default function CertificatesPage() {
           </p>
         </div>
 
-        {/* Acciones principales - Flujo Lineal */}
+        {/* Acciones principales */}
         {isReady && (
           <div className="flex gap-3 animate-in fade-in zoom-in duration-500">
-            {/* PASO 1: Analizar (Visible solo si no se ha mapeado y no hay PDF) */}
             {!isMapped && !pdfUrl && (
               <button
-                onClick={handleAnalyze}
-                disabled={isProcessing}
+                onClick={() => handleAnalyze(imageFiles)} // Pasamos las imágenes al análisis
+                disabled={
+                  isProcessing || (imageTags.length > 0 && missingImages)
+                }
                 className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg transition-all active:scale-95 disabled:opacity-60"
               >
                 {isProcessing ? (
@@ -67,11 +89,12 @@ export default function CertificatesPage() {
                 ) : (
                   <FileSearch className="w-5 h-5" />
                 )}
-                Analizar Variables
+                {imageTags.length > 0
+                  ? "Analizar Datos e Imágenes"
+                  : "Analizar Variables"}
               </button>
             )}
 
-            {/* PASO 2: Generar PDF (Visible solo después de un análisis exitoso) */}
             {isMapped && !pdfUrl && (
               <button
                 onClick={handleGenerate}
@@ -87,13 +110,11 @@ export default function CertificatesPage() {
               </button>
             )}
 
-            {/* PASO 3: Resultado y Descarga */}
             {pdfUrl && (
               <div className="flex gap-2">
                 <button
                   onClick={() => window.location.reload()}
                   className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all shadow-sm"
-                  title="Nuevo proceso"
                 >
                   <RefreshCw className="w-5 h-5" />
                 </button>
@@ -110,71 +131,29 @@ export default function CertificatesPage() {
         )}
       </header>
 
-      {/* Alertas de Inconsistencias (Mapeo Supabase vs Excel) */}
-      {/* ... resto del código anterior ... */}
+      {/* Alertas */}
       {processWarning && (
         <div
           className={`flex items-start gap-3 px-5 py-4 border-l-4 rounded-r-2xl animate-in slide-in-from-left-2 duration-300 ${
             processWarning.includes("✅")
-              ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-500 shadow-sm shadow-emerald-100/50"
+              ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-500"
               : "bg-amber-50 dark:bg-amber-950/20 border-amber-400"
           }`}
         >
-          {processWarning.includes("✅") ? (
-            <div className="bg-emerald-500 p-1 rounded-lg">
-              <FileCheck className="w-5 h-5 text-white shrink-0" />
-            </div>
-          ) : (
-            <AlertTriangle className="w-6 h-6 text-amber-500 shrink-0 mt-0.5" />
-          )}
-
+          {/* ... contenido de alerta ... */}
           <div className="flex-1">
-            <p
-              className={`text-sm font-bold uppercase tracking-tight ${
-                processWarning.includes("✅")
-                  ? "text-emerald-800 dark:text-emerald-400"
-                  : "text-amber-800 dark:text-amber-400"
-              }`}
-            >
-              {processWarning.includes("✅")
-                ? "Datos Vinculados Correctamente"
-                : "Atención con el Excel"}
+            <p className="text-sm font-bold uppercase tracking-tight">
+              {processWarning.includes("✅") ? "Datos Vinculados" : "Atención"}
             </p>
-            <p
-              className={`text-xs mt-1 leading-relaxed ${
-                processWarning.includes("✅")
-                  ? "text-emerald-700/90 dark:text-emerald-300/80"
-                  : "text-amber-700/80 dark:text-amber-300/80"
-              }`}
-            >
-              {processWarning}
-            </p>
-          </div>
-        </div>
-      )}
-      {/* ... resto del código ... */}
-      {/* Banner de Error Crítico (Falta de mapeo en Supabase, etc) */}
-      {processError && (
-        <div className="flex items-center gap-3 px-5 py-4 bg-red-50 dark:bg-red-950/30 border-l-4 border-red-500 rounded-r-2xl animate-in shake duration-500">
-          <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-          <div>
-            <p className="text-sm font-bold text-red-800 dark:text-red-400 uppercase tracking-tight">
-              Error de Configuración
-            </p>
-            <p className="text-xs text-red-700/80 dark:text-red-300/80 mt-1">
-              {processError}
-            </p>
+            <p className="text-xs mt-1">{processWarning}</p>
           </div>
         </div>
       )}
 
       {/* Cuerpo Principal */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Panel de Selección (Izquierda) */}
         <div
-          className={`${
-            excelFile ? "lg:col-span-4" : "lg:col-span-6"
-          } space-y-6 transition-all duration-700 ease-in-out`}
+          className={`${excelFile ? "lg:col-span-4" : "lg:col-span-6"} space-y-6 transition-all duration-700`}
         >
           <div className="bg-white dark:bg-slate-900/50 p-1 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
             <CertificateSelectors
@@ -189,27 +168,74 @@ export default function CertificatesPage() {
             />
           </div>
 
-          {selectedCompany && (
-            <div className="animate-in fade-in slide-in-from-bottom-2">
-              <CompanyBadge company={selectedCompany} />
-            </div>
-          )}
+          {selectedCompany && <CompanyBadge company={selectedCompany} />}
 
           <ExcelDropzone onFileSelect={setExcelFile} currentFile={excelFile} />
+
+          {/* --- SECCIÓN DINÁMICA DE IMÁGENES --- */}
+          {excelFile && imageTags.length > 0 && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="flex items-center gap-2 px-2">
+                <ImagePlus className="w-4 h-4 text-blue-500" />
+                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Multimedia Requerida
+                </h3>
+              </div>
+
+              <div className="grid gap-3">
+                {imageTags.map(({ tag, label }) => (
+                  <div
+                    key={tag}
+                    className={`relative flex flex-col p-4 rounded-2xl border-2 border-dashed transition-all ${
+                      imageFiles[tag]
+                        ? "bg-emerald-50/50 border-emerald-500/50 dark:bg-emerald-950/10"
+                        : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-blue-500/50 shadow-sm"
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex-1 pr-4">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">
+                          {tag}
+                        </p>
+                        <p className="text-sm font-extrabold text-slate-700 dark:text-slate-200 truncate">
+                          {label}
+                        </p>
+                      </div>
+                      {imageFiles[tag] ? (
+                        <CheckCircle2 className="text-emerald-500 w-5 h-5 shrink-0" />
+                      ) : (
+                        <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl">
+                          <ImageIcon className="w-4 h-4 text-slate-400" />
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(tag, file);
+                      }}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    {imageFiles[tag] && (
+                      <p className="mt-2 text-[10px] font-medium text-emerald-600 truncate italic">
+                        ✓ {imageFiles[tag].name}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {!excelFile && <FeatureTips />}
         </div>
 
-        {/* Panel de Vista Previa (Derecha) */}
+        {/* Panel de Vista Previa */}
         <div
-          className={`${
-            excelFile ? "lg:col-span-8" : "lg:col-span-6"
-          } transition-all duration-700 ease-in-out h-full min-h-[500px]`}
+          className={`${excelFile ? "lg:col-span-8" : "lg:col-span-6"} transition-all duration-700 h-full min-h-[500px]`}
         >
-          {/* MODIFICACIÓN: 
-              Incluso si hay excelFile, si NO ha sido analizado exitosamente (isMapped),
-              mantenemos el EmptyPreview para evitar que se vea el Word base sin datos.
-          */}
           {!isMapped ? (
             <EmptyPreview />
           ) : (

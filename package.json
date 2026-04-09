@@ -16,6 +16,7 @@
     "cloudconvert": "^3.0.0",
     "clsx": "^2.1.1",
     "docxtemplater": "^3.68.3",
+    "docxtemplater-image-module-free": "^1.1.1",
     "framer-motion": "^12.38.0",
     "googleapis": "^171.4.0",
     "lucide-react": "^1.7.0",

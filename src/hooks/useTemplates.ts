@@ -13,6 +13,32 @@ const sanitizeFileName = (name: string) => {
     .replace(/_{2,}/g, "_");
 };
 
+// ─── Preview en background ────────────────────────────────────────────────────
+// Fire-and-forget: no bloquea la UI. Cuando termina, parchea el estado local
+// con la preview_url. Si falla, solo loguea — el usuario no se entera.
+const triggerPreviewGeneration = (
+  templateId: string,
+  filePath: string,
+  onSuccess: (previewUrl: string) => void
+) => {
+  // NO usamos 'await' aquí para que el hilo principal siga libre
+  fetch("/api/templates/generate-preview", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ templateId, storagePath: filePath }),
+    // Esto es clave: le decimos al navegador que mantenga la conexión viva
+    keepalive: true, 
+  })
+    .then(async (res) => {
+      if (!res.ok) throw new Error("Error en servidor");
+      const { previewUrl } = await res.json();
+      if (previewUrl) onSuccess(previewUrl);
+    })
+    .catch((err) => {
+      console.warn("[generate-preview] Error de fondo (Adobe tardó mucho o falló):", err.message);
+    });
+};
+
 export function useTemplates() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,12 +69,11 @@ export function useTemplates() {
     fetchTemplates();
   }, [fetchTemplates]);
 
-  // --- ESTA ES LA FUNCIÓN QUE TE FALTABA ---
   const updateTemplateMapping = async (id: string, mapping: Record<string, string>) => {
     try {
       const { error } = await supabase
         .from("templates")
-        .update({ mapping }) // Actualizamos la columna mapping (jsonb)
+        .update({ mapping })
         .eq("id", id);
 
       if (error) {
@@ -56,7 +81,6 @@ export function useTemplates() {
         throw error;
       }
 
-      // Refrescamos la lista local para que veas los cambios de una
       await fetchTemplates();
     } catch (err) {
       console.error("Error crítico actualizando mapeo:", err);
@@ -76,6 +100,7 @@ export function useTemplates() {
     const filePath = `uploads/${Date.now()}_${cleanFileName}`;
 
     try {
+      // PASO 1 — Subir el .docx al bucket
       const { error: uploadError } = await supabase.storage
         .from("templates")
         .upload(filePath, file, { cacheControl: "3600", upsert: false });
@@ -90,16 +115,22 @@ export function useTemplates() {
         .from("templates")
         .getPublicUrl(filePath);
 
-      const { error: insertError } = await supabase.from("templates").insert({
-        name: form.name.trim() || file.name,
-        description: form.description || null,
-        file_path: filePath,
-        file_name: file.name,
-        file_url: urlData.publicUrl,
-        company_id: form.company_id || null,
-        active: true,
-        mapping: {}, // Inicializamos mapping como objeto vacío
-      });
+      // PASO 2 — Insertar registro (preview_url null por ahora)
+      const { data: insertedRows, error: insertError } = await supabase
+        .from("templates")
+        .insert({
+          name: form.name.trim() || file.name,
+          description: form.description || null,
+          file_path: filePath,
+          file_name: file.name,
+          file_url: urlData.publicUrl,
+          company_id: form.company_id || null,
+          active: true,
+          mapping: {},
+          preview_url: null, // se llenará en background
+        })
+        .select("*, company:companies(id, name)")
+        .single();
 
       if (insertError) {
         console.error("Error creando el registro:", insertError.message);
@@ -108,11 +139,26 @@ export function useTemplates() {
         return;
       }
 
-      await fetchTemplates(); 
+      // PASO 3 — Refrescar lista y cerrar modal (el usuario ya ve su plantilla)
+      await fetchTemplates();
       onDone();
+      setUploading(false);
+
+      // PASO 4 — Lanzar conversión a PDF en background (sin await)
+      // Cuando termina, actualiza solo ese template en el estado local
+      triggerPreviewGeneration(
+        insertedRows.id,
+        filePath,
+        (previewUrl) => {
+          setTemplates((prev) =>
+            prev.map((t) =>
+              t.id === insertedRows.id ? { ...t, preview_url: previewUrl } : t
+            )
+          );
+        }
+      );
     } catch (err) {
       console.error("Error crítico en subida:", err);
-    } finally {
       setUploading(false);
     }
   };
@@ -120,6 +166,12 @@ export function useTemplates() {
   const deleteTemplate = async (id: string, filePath: string) => {
     try {
       await deleteTemplateFile(filePath);
+
+      // Borrar también el preview del storage si existe
+      await supabase.storage
+        .from("templates")
+        .remove([`previews/${id}.pdf`]);
+
       const { error } = await supabase.from("templates").delete().eq("id", id);
       if (error) console.error("Error eliminando:", error.message);
       await fetchTemplates();
@@ -128,13 +180,12 @@ export function useTemplates() {
     }
   };
 
-  // ✅ AQUÍ ESTÁ EL CAMBIO IMPORTANTE: Agregué 'updateTemplateMapping' al return
-  return { 
-    templates, 
-    loading, 
-    uploading, 
-    uploadTemplate, 
+  return {
+    templates,
+    loading,
+    uploading,
+    uploadTemplate,
     deleteTemplate,
-    updateTemplateMapping 
+    updateTemplateMapping,
   };
 }
