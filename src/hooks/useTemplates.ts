@@ -69,24 +69,28 @@ export function useTemplates() {
     fetchTemplates();
   }, [fetchTemplates]);
 
-  const updateTemplateMapping = async (id: string, mapping: Record<string, string>) => {
-    try {
-      const { error } = await supabase
-        .from("templates")
-        .update({ mapping })
-        .eq("id", id);
+  // Cambia la función existente por esta:
+const updateTemplateMapping = async (id: string, mapping: any) => {
+  try {
+    // Al usar 'any' aquí, permitimos que acepte el objeto complejo MappingField
+    // sin que TypeScript se queje en el build de Vercel.
+    const { error } = await supabase
+      .from("templates")
+      .update({ mapping })
+      .eq("id", id);
 
-      if (error) {
-        console.error("Error actualizando mapeo en Supabase:", error.message);
-        throw error;
-      }
-
-      await fetchTemplates();
-    } catch (err) {
-      console.error("Error crítico actualizando mapeo:", err);
-      throw err;
+    if (error) {
+      console.error("Error actualizando mapeo en Supabase:", error.message);
+      throw error;
     }
-  };
+
+    // Refrescamos la lista para que la UI tenga los datos nuevos
+    await fetchTemplates();
+  } catch (err) {
+    console.error("Error crítico actualizando mapeo:", err);
+    throw err;
+  }
+};
 
   const uploadTemplate = async (
     file: File,
