@@ -1,3 +1,8 @@
+export interface MappingField {
+  label: string;
+  type: "text" | "image"; // Así controlas que solo sean estos dos
+}
+
 export interface Template {
   id: string;
   name: string;
@@ -7,10 +12,11 @@ export interface Template {
   file_url: string | null;
   company_id: string | null;
   variables: Record<string, string> | null;
+  // AGREGAMOS ESTO:
+  mapping: Record<string, MappingField> | null; 
   active: boolean;
   created_at: string;
   updated_at: string;
-  // joined
   company?: { id: string; name: string } | null;
 }
 
