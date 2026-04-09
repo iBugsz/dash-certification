@@ -25,8 +25,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // --- 1. COBRAMOS POR ADELANTADO ---
-    // Registramos el uso antes de la conversión pesada por si hay timeout en la conexión
+    // --- 1. REGISTRO DE USO ---
     await supabase.rpc("increment_adobe_usage");
 
     // --- 2. DESCARGAR EL .DOCX DESDE EL STORAGE ---
@@ -43,39 +42,39 @@ export async function POST(request: Request) {
     const wordBuffer = Buffer.from(await fileData.arrayBuffer());
     const pdfResult = await convertWordToPdf(wordBuffer);
 
-    // --- 4. TRATAMIENTO DEL BUFFER (Solución al TypeError) ---
+    // --- 4. TRATAMIENTO DEL BUFFER (Corregido para TypeScript) ---
     let finalBuffer: Buffer;
     
     if (Buffer.isBuffer(pdfResult)) {
-      // Si ya es un Buffer de Node.js
       finalBuffer = pdfResult;
-    } else if (pdfResult && typeof pdfResult.arrayBuffer === 'function') {
-      // Si es un objeto tipo Blob o File
-      finalBuffer = Buffer.from(await pdfResult.arrayBuffer());
-    } else if (pdfResult && typeof pdfResult[Symbol.asyncIterator] === 'function') {
-      // Si es un ReadableStream (común en la SDK de Adobe para Node)
+    } else if (pdfResult && typeof (pdfResult as any).arrayBuffer === 'function') {
+      // ✅ Corregido con 'as any' para evitar el error de "Property arrayBuffer does not exist on type never"
+      finalBuffer = Buffer.from(await (pdfResult as any).arrayBuffer());
+    } else if (pdfResult && typeof (pdfResult as any)[Symbol.asyncIterator] === 'function') {
+      // ✅ Corregido con 'as any' para manejar Streams de Node
       const chunks = [];
-      for await (const chunk of pdfResult) {
+      for await (const chunk of (pdfResult as any)) {
         chunks.push(chunk);
       }
       finalBuffer = Buffer.concat(chunks);
     } else {
-      // Caso de respaldo si ya es un Uint8Array o similar
-      finalBuffer = Buffer.from(pdfResult);
+      // Caso de respaldo: intentamos convertir lo que venga a Buffer
+      finalBuffer = Buffer.from(pdfResult as any);
     }
 
     // --- 5. GUARDAR EL PDF EN PREVIEWS/ ---
     const previewPath = `previews/${templateId}.pdf`;
 
+    // Usamos Uint8Array para asegurar compatibilidad total en el upload
     const { error: uploadError } = await supabase.storage
       .from("templates")
-      .upload(previewPath, finalBuffer, {
+      .upload(previewPath, new Uint8Array(finalBuffer), {
         contentType: "application/pdf",
         upsert: true, 
       });
 
     if (uploadError) {
-      console.error("❌ DETALLE ERROR SUPABASE STORAGE:", uploadError);
+      console.error("❌ Error Supabase Storage Upload:", uploadError);
       throw new Error(`Error subiendo preview: ${uploadError.message}`);
     }
 
@@ -88,7 +87,7 @@ export async function POST(request: Request) {
       .from("templates")
       .update({ 
         preview_url: urlData.publicUrl,
-        has_preview: true // <--- AGREGAMOS ESTO PARA QUE CAMBIE A TRUE
+        has_preview: true 
       })
       .eq("id", templateId);
 
@@ -97,7 +96,7 @@ export async function POST(request: Request) {
       throw new Error("Error actualizando la base de datos");
     }
 
-    console.log("✅ Preview generada y guardada con éxito para template:", templateId);
+    console.log("✅ Preview generada con éxito:", templateId);
     
     return NextResponse.json({ 
       success: true, 
