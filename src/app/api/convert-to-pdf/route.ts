@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
     await supabase.rpc("increment_adobe_usage");
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
