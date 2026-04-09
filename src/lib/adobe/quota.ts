@@ -31,6 +31,13 @@ export async function logAdobeUsage({
   jobId?: string;
   status?: "success" | "error";
 }) {
+  // 1. Validación para calmar a TypeScript
+  if (!supabaseAdmin) {
+    console.warn("[adobe quota] Registro omitido: Supabase Admin no configurado.");
+    return;
+  }
+
+  // 2. Ahora TypeScript sabe que supabaseAdmin NO es null
   const { error } = await supabaseAdmin.from("api_usage").insert({
     company_id:   companyId,
     template_id:  templateId ?? null,
