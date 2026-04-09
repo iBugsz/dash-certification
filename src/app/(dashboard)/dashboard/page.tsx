@@ -17,9 +17,8 @@ import { BucketBars } from "@/components/features/dashboard/BucketBars";
 import { ActivityFeed } from "@/components/features/dashboard/ActivityFeed";
 import { ServiceGrid } from "@/components/features/dashboard/ServiceGrid";
 import { MiniBarChart } from "@/components/features/dashboard/MiniBarChart";
+import { AdobeQuotaCard } from "@/components/features/dashboard/AdobeQuotaCard";
 
-// ─── Section wrapper ──────────────────────────────────────────────────────────
-// Usa --card y --border del globals.css → funciona en light y dark automáticamente
 function Section({
   title,
   children,
@@ -48,7 +47,6 @@ function Section({
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const d = useDashboardData();
 
@@ -56,7 +54,6 @@ export default function DashboardPage() {
   const totalLimitBytes = d.dbLimitBytes + d.storageLimitBytes;
 
   return (
-    // Sin bg propio — hereda --background del body via globals.css
     <div className="p-6 lg:p-8 space-y-6">
       {/* ── Header ── */}
       <motion.header
@@ -69,11 +66,7 @@ export default function DashboardPage() {
           <h1 className="text-2xl lg:text-3xl font-black tracking-tight text-[var(--foreground)]">
             Panel de Control
           </h1>
-          <p className="text-sm mt-1 text-[var(--foreground)] opacity-40">
-            XcelDoc · Supabase Free Tier · sa-east-1
-          </p>
         </div>
-
         <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 rounded-xl">
           <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
           <span className="text-emerald-600 dark:text-emerald-400 text-xs font-bold tracking-wider uppercase">
@@ -120,14 +113,12 @@ export default function DashboardPage() {
 
       {/* ── Main grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Storage donuts + buckets — span 2 */}
         <Section
           title="Almacenamiento · Supabase"
           className="lg:col-span-2"
           delay={0.25}
         >
           <div className="flex flex-col gap-6">
-            {/* Tres donuts */}
             <div className="flex items-start justify-around flex-wrap gap-8 py-2">
               <StorageDonut
                 label="Base de Datos"
@@ -154,7 +145,6 @@ export default function DashboardPage() {
 
             <div className="border-t border-[var(--border)]" />
 
-            {/* Buckets */}
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--foreground)] opacity-30 mb-3">
                 Desglose por bucket
@@ -167,12 +157,9 @@ export default function DashboardPage() {
           </div>
         </Section>
 
-        {/* Servicios + DB schemas */}
         <Section title="Servicios Supabase" delay={0.3}>
           <ServiceGrid />
-
           <div className="border-t border-[var(--border)] my-4" />
-
           <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--foreground)] opacity-30 mb-3">
             DB Schemas
           </p>
@@ -203,8 +190,8 @@ export default function DashboardPage() {
         </Section>
       </div>
 
-      {/* ── Bottom grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* ── Bottom grid — 3 columnas ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Gráfico semanal */}
         <Section delay={0.35}>
           <div className="flex items-center justify-between mb-4">
@@ -222,6 +209,14 @@ export default function DashboardPage() {
         {/* Actividad reciente */}
         <Section title="Actividad Reciente" delay={0.4}>
           <ActivityFeed items={d.recentTemplates} />
+        </Section>
+
+        {/* Cuota Adobe ← NUEVO */}
+        <Section title="Cuota · Adobe PDF" delay={0.45}>
+          <AdobeQuotaCard
+            used={d.loading ? 0 : d.adobeUsed}
+            limit={d.loading ? 500 : d.adobeLimit}
+          />
         </Section>
       </div>
     </div>

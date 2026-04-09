@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import Sidebar from "@/components/ui/Sidebar";
-import Navbar from "@/components/ui/Navbar";
 
 export default function DashboardLayout({
   children,
@@ -21,7 +20,6 @@ export default function DashboardLayout({
           ${isCollapsed ? "md:ml-[52px]" : "md:ml-[220px]"}
         `}
       >
-        <Navbar />
         <main className="p-4 md:p-8 flex-1 animate-in fade-in duration-500">
           {children}
         </main>

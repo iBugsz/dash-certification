@@ -1,59 +1,88 @@
-// src/components/features/certificates/ExcelDropzone.tsx
-'use client';
-import { useState, useCallback } from 'react';
-import { Upload, FileSpreadsheet, X } from "lucide-react";
+"use client";
+import { useState } from "react";
+import { Upload, FileSpreadsheet, FileText, X } from "lucide-react";
 
-export default function ExcelDropzone({ onFileSelect }: { onFileSelect: (file: File | null) => void }) {
-  const [file, setFile] = useState<File | null>(null);
+export function ExcelDropzone({
+  onFileSelect,
+  currentFile,
+}: {
+  onFileSelect: (file: File | null) => void;
+  currentFile: File | null;
+}) {
   const [isDragActive, setIsDragActive] = useState(false);
 
-  const handleFile = (selectedFile: File) => {
-    if (selectedFile.name.endsWith('.xlsx') || selectedFile.name.endsWith('.xls')) {
-      setFile(selectedFile);
-      onFileSelect(selectedFile);
+  // 1. Extendemos la validación de la extensión
+  const handleFile = (file: File) => {
+    const validExtensions = [".xlsx", ".xls", ".docx", ".doc"];
+    const isWordOrExcel = validExtensions.some((ext) =>
+      file.name.toLowerCase().endsWith(ext),
+    );
+
+    if (isWordOrExcel) {
+      onFileSelect(file);
     } else {
-      alert("Por favor sube solo archivos Excel");
+      alert("Sube un archivo válido (Excel o Word)");
     }
   };
 
+  // Determinar qué icono mostrar según el archivo actual
+  const isWord =
+    currentFile?.name.toLowerCase().endsWith(".doc") ||
+    currentFile?.name.toLowerCase().endsWith(".docx");
+
   return (
-    <div 
-      onDragOver={(e) => { e.preventDefault(); setIsDragActive(true); }}
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        setIsDragActive(true);
+      }}
       onDragLeave={() => setIsDragActive(false)}
       onDrop={(e) => {
         e.preventDefault();
         setIsDragActive(false);
         if (e.dataTransfer.files?.[0]) handleFile(e.dataTransfer.files[0]);
       }}
-      className={`relative bg-white p-6 md:p-12 rounded-[24px] shadow-sm border-dashed border-2 flex flex-col items-center justify-center text-center group transition-all cursor-pointer min-h-[200px]
-        ${isDragActive ? 'border-[#8633FF] bg-purple-50' : 'border-slate-100 hover:border-[#8633FF]'}`}
+      className={`relative p-8 rounded-[28px] border-2 border-dashed transition-all min-h-[220px] flex flex-col items-center justify-center text-center
+        ${currentFile ? "border-emerald-800 bg-emerald-950/25" : isDragActive ? "border-accent bg-accent/5 scale-[1.02]" : "bg-[var(--card)] border-[var(--border)]"}`}
     >
-      <input 
-        type="file" 
-        className="absolute inset-0 opacity-0 cursor-pointer" 
-        accept=".xlsx,.xls"
-        onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-      />
-
-      {!file ? (
+      {!currentFile ? (
         <>
-          <div className="p-4 bg-slate-50 rounded-full mb-4 group-hover:bg-purple-50 transition-colors">
-            <Upload className="w-6 h-6 md:w-8 md:h-8 text-slate-400 group-hover:text-[#8633FF]" />
+          {/* 2. Actualizamos el atributo accept */}
+          <input
+            type="file"
+            className="absolute inset-0 opacity-0 cursor-pointer"
+            accept=".xlsx,.xls,.doc,.docx"
+            onChange={(e) =>
+              e.target.files?.[0] && handleFile(e.target.files[0])
+            }
+          />
+          <div className="w-14 h-14 bg-slate-800/80 rounded-2xl flex items-center justify-center mb-4">
+            <Upload className="w-7 h-7 text-slate-500" />
           </div>
-          <h3 className="text-base md:text-lg font-semibold text-slate-700">Cargar Archivo Excel</h3>
-          <p className="text-slate-500 text-sm mt-1">Arrastra tu archivo .xlsx o haz clic para explorar</p>
+          <h3 className="text-base font-bold text-slate-200">
+            Subir Documento o Base de Datos
+          </h3>
+          <p className="text-xs text-slate-500 mt-2">
+            Arrastra tu archivo .xlsx, .docx o haz clic
+          </p>
         </>
       ) : (
-        <div className="flex flex-col items-center animate-in fade-in zoom-in">
-          <div className="p-4 bg-emerald-50 rounded-full mb-4">
-            <FileSpreadsheet className="w-8 h-8 text-emerald-600" />
-          </div>
-          <h3 className="text-sm font-bold text-slate-700 uppercase tracking-tight">{file.name}</h3>
-          <button 
-            onClick={(e) => { e.preventDefault(); setFile(null); onFileSelect(null); }}
-            className="mt-4 text-xs font-bold text-red-500 flex items-center gap-1 hover:underline"
+        <div className="flex flex-col items-center">
+          {/* 3. Cambiamos el icono dinámicamente */}
+          {isWord ? (
+            <FileText className="w-10 h-10 text-blue-500 mb-2" />
+          ) : (
+            <FileSpreadsheet className="w-10 h-10 text-emerald-500 mb-2" />
+          )}
+
+          <p className="text-sm font-bold text-slate-100 truncate max-w-[200px]">
+            {currentFile.name}
+          </p>
+          <button
+            onClick={() => onFileSelect(null)}
+            className="mt-4 text-[10px] font-black text-red-400 uppercase flex items-center gap-1"
           >
-            <X className="w-3 h-3" /> Quitar archivo
+            <X className="w-3 h-3" /> Eliminar
           </button>
         </div>
       )}

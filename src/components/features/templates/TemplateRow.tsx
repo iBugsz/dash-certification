@@ -1,16 +1,21 @@
 "use client";
 
 import { FileText, Settings2, ExternalLink, Trash2 } from "lucide-react";
-import Link from "next/link";
 import { Template } from "@/lib/templates/types";
 import { formatDate } from "@/lib/templates/utils";
 
 interface Props {
   template: Template;
   onDelete: (id: string, filePath: string) => void;
+  // Esta es la pieza que falta: la fila avisa que quieren mapear esta plantilla
+  onMappingClick: (template: Template) => void;
 }
 
-export default function TemplateRow({ template, onDelete }: Props) {
+export default function TemplateRow({
+  template,
+  onDelete,
+  onMappingClick,
+}: Props) {
   return (
     <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors group">
       {/* Nombre */}
@@ -47,22 +52,19 @@ export default function TemplateRow({ template, onDelete }: Props) {
       {/* Acciones */}
       <td className="px-6 py-4">
         <div className="flex justify-end gap-1">
-          <Link
-            href={`/plantillas/${template.id}/config`}
+          {/* CAMBIO AQUÍ: Usamos un button en lugar de Link */}
+          <button
+            onClick={() => onMappingClick(template)}
             title="Configurar Mapeo"
-            className="p-2 text-slate-400 hover:text-accent hover:bg-accent/10 rounded-xl transition-all"
+            className="p-2 text-slate-400 hover:text-accent hover:bg-accent/10 rounded-xl transition-all cursor-pointer"
           >
             <Settings2 className="w-4 h-4" />
-          </Link>
+          </button>
 
-          {/* SOLUCIÓN AL ERROR EN ROJO:
-            Usamos ?? "" para asegurar que el href sea un string y no un null.
-          */}
           <a
             href={template.file_url ?? "#"}
             target="_blank"
             rel="noopener noreferrer"
-            title="Descargar"
             className={`p-2 text-slate-400 hover:text-accent hover:bg-accent/10 rounded-xl transition-all ${
               !template.file_url ? "pointer-events-none opacity-20" : ""
             }`}
@@ -71,7 +73,6 @@ export default function TemplateRow({ template, onDelete }: Props) {
           </a>
 
           <button
-            title="Eliminar"
             onClick={() => onDelete(template.id, template.file_path)}
             className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition-all cursor-pointer"
           >

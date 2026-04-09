@@ -1,149 +1,140 @@
-import { User, Palette, Database, Save, ShieldCheck } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import {
+  Loader2,
+  Settings2,
+  UserRound,
+  CreditCard,
+  HelpCircle,
+} from "lucide-react";
+import { useSettings } from "@/hooks/useSettings";
+import { ToastBanner } from "@/components/features/settings/ToastBanner";
+import { ProfileSection } from "@/components/features/settings/ProfileSection";
+import { AppearanceSection } from "@/components/features/settings/AppearanceSection";
+import { NotificationsSection } from "@/components/features/settings/NotificationsSection";
+import { SidebarInfo } from "@/components/features/settings/SidebarInfo";
+import { AccountTab } from "@/components/features/settings/AccountTab"; // Importamos el nuevo componente
+
+const TABS = [
+  { id: "general", label: "General", icon: Settings2 },
+  { id: "account", label: "Cuenta", icon: UserRound },
+  { id: "billing", label: "Plan y Facturación", icon: CreditCard },
+  { id: "help", label: "Ayuda", icon: HelpCircle },
+];
 
 export default function SettingsPage() {
+  const s = useSettings();
+  const [activeTab, setActiveTab] = useState("general");
+
+  if (s.loadingUser) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="animate-spin text-[var(--accent)]" size={28} />
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full max-w-(--breakpoint-2xl) mx-auto p-4 md:p-8 space-y-8 text-slate-900 dark:text-slate-100">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-slate-100 font-poppins">
-          Configuración
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base">
-          Gestiona los parámetros generales de AutoCert Pro.
-        </p>
-      </div>
+    <>
+      <ToastBanner toast={s.toast} onClose={() => s.setToast(null)} />
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
-        <div className="xl:col-span-2 space-y-6">
-          <section className="bg-[var(--card)] p-6 md:p-8 rounded-[24px] shadow-sm border border-[var(--border)] transition-colors">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="p-2 bg-accent-soft rounded-lg">
-                <User className="text-accent w-5 h-5" />
-              </div>
-              <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                Perfil del Administrador
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-600 dark:text-slate-400 ml-1">
-                  Nombre Completo
-                </label>
-                <input
-                  type="text"
-                  placeholder="Sebas"
-                  className="w-full p-3 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-accent focus:bg-[var(--input-bg-focus)] outline-none transition-all"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-600 dark:text-slate-400 ml-1">
-                  Correo Electrónico
-                </label>
-                <input
-                  type="email"
-                  placeholder="admin@autocert.pro"
-                  className="w-full p-3 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-accent focus:bg-[var(--input-bg-focus)] outline-none transition-all"
-                />
-              </div>
-            </div>
-          </section>
+      <div className="w-full max-w-6xl mx-auto p-4 md:p-8">
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-slate-100">
+            Configuración
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+            Gestiona tu cuenta y preferencias de AutoCert Pro.
+          </p>
+        </div>
 
-          <section className="bg-[var(--card)] p-6 md:p-8 rounded-[24px] shadow-sm border border-[var(--border)] transition-colors">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="p-2 bg-accent-soft rounded-lg">
-                <Palette className="text-accent w-5 h-5" />
-              </div>
-              <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                Personalización de Marca
-              </h2>
-            </div>
-            <div className="space-y-6">
-              <div className="flex items-center gap-6">
-                <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800/60 rounded-[20px] flex items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-600">
-                  <span className="text-xs text-slate-400 dark:text-slate-500">
-                    Logo
-                  </span>
-                </div>
-                <button className="px-4 py-2 border border-[var(--border)] rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
-                  Cambiar Logo
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Menú Lateral */}
+          <aside className="w-full lg:w-64 flex flex-row lg:flex-col gap-1 overflow-x-auto pb-2 lg:pb-0">
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex cursor-pointer items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? "bg-[var(--accent)] text-white shadow-lg shadow-[var(--accent-ring)]"
+                      : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <Icon size={18} />
+                  {tab.label}
                 </button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-600 dark:text-slate-400 ml-1">
-                    Color Primario
-                  </label>
-                  <div className="flex gap-2">
-                    <div className="w-10 h-10 bg-accent rounded-lg shadow-sm shrink-0" />
-                    <input
-                      type="text"
-                      value="#0EA5E9"
-                      className="flex-1 p-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-sm text-slate-800 dark:text-slate-200 outline-none"
-                      readOnly
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-600 dark:text-slate-400 ml-1">
-                    Nombre de la Aplicación
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue="AutoCert Pro"
-                    className="w-full p-3 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] text-slate-800 dark:text-slate-200 focus:bg-[var(--input-bg-focus)] outline-none transition-all"
-                  />
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
+              );
+            })}
+          </aside>
 
-        <div className="space-y-6">
-          <section className="bg-[var(--card)] p-6 rounded-[24px] shadow-sm border border-[var(--border)] transition-colors">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-emerald-100 dark:bg-emerald-950/40 rounded-lg">
-                <Database className="text-emerald-600 dark:text-emerald-400 w-5 h-5" />
-              </div>
-              <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                Servicios
-              </h2>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-transparent dark:border-slate-700/50">
-                <div className="flex items-center gap-3">
-                  <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Supabase Auth
-                  </span>
-                </div>
-                <span className="text-[10px] bg-emerald-500 text-white px-2 py-1 rounded-full font-bold uppercase">
-                  Online
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-transparent dark:border-slate-700/50">
-                <div className="flex items-center gap-3">
-                  <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                    PostgreSQL DB
-                  </span>
-                </div>
-                <span className="text-[10px] bg-emerald-500 text-white px-2 py-1 rounded-full font-bold uppercase">
-                  Online
-                </span>
-              </div>
-            </div>
-          </section>
+          {/* Contenido Principal */}
+          <div className="flex-1">
+            {/* PESTAÑA GENERAL */}
+            {activeTab === "general" && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <ProfileSection
+                  fullName={s.fullName}
+                  setFullName={s.setFullName}
+                  email={s.email}
+                  setEmail={s.setEmail}
+                  avatarUrl={s.avatarUrl}
+                  setAvatarUrl={s.setAvatarUrl}
+                  uploadingAvatar={s.uploadingAvatar}
+                  savingProfile={s.savingProfile}
+                  initials={s.initials}
+                  fileRef={s.fileRef}
+                  onAvatarChange={s.handleAvatarChange}
+                  onSave={s.saveProfile}
+                />
 
-          <div className="xl:sticky xl:top-8">
-            <button className="w-full py-4 bg-accent-gradient text-white rounded-[20px] font-semibold shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3">
-              <Save className="w-5 h-5" />
-              Guardar Cambios
-            </button>
-            <p className="text-center text-xs text-slate-400 dark:text-slate-500 mt-4">
-              Última sincronización: Hoy a las 1:35 PM
-            </p>
+                <AppearanceSection
+                  theme={s.theme}
+                  setTheme={s.setTheme}
+                  mounted={s.mounted}
+                />
+
+                <NotificationsSection
+                  notifEmail={s.notifEmail}
+                  setNotifEmail={s.setNotifEmail}
+                  notifGeneracion={s.notifGeneracion}
+                  setNotifGeneracion={s.setNotifGeneracion}
+                  notifErrores={s.notifErrores}
+                  setNotifErrores={s.setNotifErrores}
+                />
+              </div>
+            )}
+
+            {/* PESTAÑA CUENTA */}
+            {activeTab === "account" && (
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <AccountTab s={s} />
+              </div>
+            )}
+
+            {/* OTRAS PESTAÑAS (Placeholders) */}
+            {activeTab === "billing" && (
+              <div className="p-12 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl text-center">
+                <CreditCard className="mx-auto mb-4 text-slate-300" size={48} />
+                <h3 className="text-lg font-semibold">Plan y Facturación</h3>
+                <p className="text-slate-500 text-sm mt-2">
+                  Próximamente podrás gestionar tu suscripción aquí.
+                </p>
+              </div>
+            )}
           </div>
+
+          {/* Sidebar Info (Solo en General) */}
+          {activeTab === "general" && (
+            <div className="hidden xl:block w-72 shrink-0">
+              <SidebarInfo userId={s.userId} />
+            </div>
+          )}
         </div>
       </div>
-    </div>
+    </>
   );
 }

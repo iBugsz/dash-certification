@@ -5,20 +5,20 @@ import {
   LayoutDashboard,
   FileStack,
   FileText,
-  Users,
-  Settings,
+  Building2,
   Book,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
+import { useUser } from "@/hooks/useUser";
+import UserMenu from "@/components/ui/UserMenu";
 
 const menuItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Certificados", href: "/certificados", icon: FileStack },
   { name: "Catálogos", href: "/catalogos", icon: Book },
   { name: "Plantillas", href: "/plantillas", icon: FileText },
-  { name: "Empresas", href: "/empresas", icon: Users },
-  { name: "Configuración", href: "/settings", icon: Settings },
+  { name: "Empresas", href: "/empresas", icon: Building2 },
 ];
 
 interface SidebarProps {
@@ -28,20 +28,20 @@ interface SidebarProps {
 
 export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
+  const { initials, displayName, user, avatarUrl } = useUser();
 
   return (
     <aside
       onClick={() => isCollapsed && setIsCollapsed(false)}
-      // Solo cambia esta línea en el className del <aside>:
       className={`
-      app-sidebar
-      hidden md:flex          // ← ÚNICA línea nueva
-      h-screen fixed left-0 top-0 z-50
-      flex-col
-      transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]
-      overflow-visible
-      ${isCollapsed ? "w-[52px] cursor-pointer" : "w-[220px]"}
-    `}
+        app-sidebar
+        hidden md:flex
+        h-screen fixed left-0 top-0 z-50
+        flex-col
+        transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]
+        overflow-visible
+        ${isCollapsed ? "w-[50px] cursor-pointer" : "w-[260px]"}
+      `}
     >
       <div className="app-sidebar__glow app-sidebar__glow--a" aria-hidden />
       <div className="app-sidebar__glow app-sidebar__glow--b" aria-hidden />
@@ -200,45 +200,19 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
         })}
       </nav>
 
-      {/* Footer usuario */}
+      {/* Footer - Ajustado con stopPropagation y centrado */}
       <div
-        className="flex-shrink-0 p-2"
+        className="flex-shrink-0 w-full"
+        onClick={(e) => e.stopPropagation()} // Evita que se abra el sidebar al dar click aquí
         style={{ borderTop: "1px solid var(--sidebar-divider)" }}
       >
-        <div
-          className={`
-            flex items-center gap-2.5 p-2 rounded-lg cursor-pointer
-            transition-colors duration-200
-            ${isCollapsed ? "justify-center" : ""}
-          `}
-          style={{ color: "var(--sidebar-fg)" }}
-          onMouseEnter={(e) =>
-            ((e.currentTarget as HTMLElement).style.background =
-              "var(--sidebar-hover-bg)")
-          }
-          onMouseLeave={(e) =>
-            ((e.currentTarget as HTMLElement).style.background = "transparent")
-          }
-        >
-          <div
-            className="w-[26px] h-[26px] rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-semibold text-white"
-            style={{
-              background:
-                "linear-gradient(135deg, var(--sidebar-avatar-from), var(--sidebar-avatar-to))",
-            }}
-          >
-            NL
-          </div>
-          <div
-            className={`
-              overflow-hidden transition-all duration-300
-              ${isCollapsed ? "opacity-0 max-w-0" : "opacity-100 max-w-xs"}
-            `}
-          >
-            <p className="app-sidebar__user-name">Nelson</p>
-            <p className="app-sidebar__user-role">Administrador</p>
-          </div>
-        </div>
+        <UserMenu
+          initials={initials}
+          displayName={displayName}
+          email={user?.email}
+          avatarUrl={avatarUrl}
+          isCollapsed={isCollapsed}
+        />
       </div>
     </aside>
   );
