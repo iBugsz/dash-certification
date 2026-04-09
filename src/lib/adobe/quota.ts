@@ -1,25 +1,24 @@
 import { createClient } from "@supabase/supabase-js";
 
-// Inicializamos el cliente con el Service Role para saltar RLS en el servidor
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
-// Consulta el estado actual de la cuota
+// Solo creamos el cliente si las llaves existen para que el build no explote
+export const supabaseAdmin = (supabaseUrl && supabaseServiceKey) 
+  ? createClient(supabaseUrl, supabaseServiceKey)
+  : null;
+
 export async function getAdobeQuotaStatus() {
+  if (!supabaseAdmin) throw new Error("Supabase Admin no configurado");
+  
   const { data, error } = await supabaseAdmin
     .from("adobe_quota_status")
     .select("*")
     .single();
 
-  if (error) {
-    console.error("Error al consultar cuota:", error.message);
-    throw new Error("No se pudo consultar la cuota de Adobe");
-  }
+  if (error) throw error;
   return data;
 }
-
 // Registra 1 crédito consumido
 export async function logAdobeUsage({
   companyId,
