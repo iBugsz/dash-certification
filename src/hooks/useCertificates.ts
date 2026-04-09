@@ -53,7 +53,7 @@ export function useCertificates() {
       const { data, error } = await supabase
         .from("templates")
         .select("id, name, description, file_name, file_url, mapping")
-        .eq("company_id", selectedCompany.id)
+        .eq("company_id", selectedCompany?.id)
         .eq("active", true)
         .order("name");
       if (!error && data) setTemplates(data);
