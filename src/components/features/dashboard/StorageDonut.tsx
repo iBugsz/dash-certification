@@ -4,10 +4,10 @@ import { motion } from "framer-motion";
 import { formatBytes, pct } from "@/lib/dashboard/utils";
 
 interface DonutProps {
-  label: string;
   usedBytes: number;
   limitBytes: number;
   color: string;
+  size?: number;
   delay?: number;
 }
 
@@ -15,10 +15,10 @@ const R = 44;
 const CIRCUMFERENCE = 2 * Math.PI * R;
 
 export function StorageDonut({
-  label,
   usedBytes,
   limitBytes,
   color,
+  size = 120,
   delay = 0,
 }: DonutProps) {
   const percentage = pct(usedBytes, limitBytes);
@@ -35,8 +35,8 @@ export function StorageDonut({
       <div className="relative">
         {/* El track usa currentColor para adaptarse al tema via CSS */}
         <svg
-          width="120"
-          height="120"
+          width={size}
+          height={size}
           viewBox="0 0 100 100"
           className="-rotate-90"
         >
