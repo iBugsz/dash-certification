@@ -134,40 +134,52 @@ export function useCertificates() {
   }, [excelFile, selectedTemplate]);
 
   const handleGenerate = useCallback(async () => {
-    if (!wordGenerated) return;
-    setIsProcessing(true);
-    setProcessError(null);
+  if (!wordGenerated) return;
+  setIsProcessing(true);
+  setProcessError(null);
 
-    try {
-      const formData = new FormData();
-      const fileToSend = new File([wordGenerated], "final_document.docx", {
-        type: "application/vnd.officedocument.wordprocessingml.document",
-      });
-      formData.append("file", fileToSend);
+  try {
+    const formData = new FormData();
+    const fileToSend = new File([wordGenerated], "final_document.docx", {
+      type: "application/vnd.officedocument.wordprocessingml.document",
+    });
+    formData.append("file", fileToSend);
 
-      const responseApi = await fetch("/api/convert-to-pdf", { 
-        method: "POST", 
-        body: formData 
-      });
+    const responseApi = await fetch("/api/convert-to-pdf", { 
+      method: "POST", 
+      body: formData 
+    });
 
-      if (!responseApi.ok) throw new Error("Error en conversión a PDF");
+    if (!responseApi.ok) throw new Error("Error en conversión a PDF");
 
-      const pdfBlob = await responseApi.blob();
-      setPdfUrl(window.URL.createObjectURL(pdfBlob));
-    } catch (err: any) {
-      setProcessError(err.message);
-    } finally {
-      setIsProcessing(false);
+    const pdfBlob = await responseApi.blob();
+    setPdfUrl(window.URL.createObjectURL(pdfBlob));
+
+    // ✅ REGISTRO DE GENERACIÓN EXITOSA
+    // Se ejecuta apenas el motor de PDF termina con éxito
+    const { error: rpcError } = await supabase.rpc('record_generation');
+    if (rpcError) {
+      console.warn("⚠️ Error al registrar métrica de generación:", rpcError);
+    } else {
+      console.log("📈 Generación exitosa registrada en el dashboard.");
     }
-  }, [wordGenerated]);
 
+  } catch (err: any) {
+    setProcessError(err.message);
+  } finally {
+    setIsProcessing(false);
+  }
+}, [wordGenerated]);
   const handleDownload = useCallback(() => {
-    if (!pdfUrl) return;
-    const link = document.createElement("a");
-    link.href = pdfUrl;
-    link.download = `Certificado_${selectedCompany?.name.replace(/\s+/g, "_")}.pdf`;
-    link.click();
-  }, [pdfUrl, selectedCompany]);
+  if (!pdfUrl) return;
+
+  const link = document.createElement("a");
+  link.href = pdfUrl;
+  link.download = `Certificado_${selectedCompany?.name.replace(/\s+/g, "_") || 'Generado'}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}, [pdfUrl, selectedCompany]);
 
   return {
     excelFile, setExcelFile, companies, selectedCompany, setSelectedCompany,

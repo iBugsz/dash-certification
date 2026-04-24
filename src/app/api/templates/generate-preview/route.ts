@@ -5,30 +5,21 @@ import { createClient } from "@supabase/supabase-js";
 export const maxDuration = 60; 
 export const dynamic = "force-dynamic";
 
+// Instancia fuera para reutilizar conexión
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 export async function POST(request: Request) {
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error("Variables de entorno de Supabase no configuradas");
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     const { templateId, storagePath } = await request.json();
 
     if (!templateId || !storagePath) {
-      return NextResponse.json(
-        { error: "Faltan templateId o storagePath" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Faltan templateId o storagePath" }, { status: 400 });
     }
 
-    // --- 1. REGISTRO DE USO ---
-    await supabase.rpc("increment_adobe_usage");
-
-    // --- 2. DESCARGAR EL .DOCX DESDE EL STORAGE ---
+    // --- 1. DESCARGAR EL .DOCX DESDE EL STORAGE ---
     const { data: fileData, error: downloadError } = await supabase.storage
       .from("templates")
       .download(storagePath);
@@ -38,34 +29,40 @@ export async function POST(request: Request) {
       throw new Error(`Error descargando el archivo: ${downloadError?.message}`);
     }
 
-    // --- 3. CONVERTIR CON ADOBE ---
+    // --- 2. CONVERTIR CON ADOBE (Primero la acción que gasta créditos) ---
+    console.log("⏳ Llamando a Adobe para previsualización...");
     const wordBuffer = Buffer.from(await fileData.arrayBuffer());
     const pdfResult = await convertWordToPdf(wordBuffer);
 
-    // --- 4. TRATAMIENTO DEL BUFFER (Corregido para TypeScript) ---
+    // --- 3. TRATAMIENTO Y VALIDACIÓN DEL BUFFER ---
     let finalBuffer: Buffer;
     
+    // Lógica robusta para detectar el Buffer del resultado de Adobe
     if (Buffer.isBuffer(pdfResult)) {
       finalBuffer = pdfResult;
     } else if (pdfResult && typeof (pdfResult as any).arrayBuffer === 'function') {
-      // ✅ Corregido con 'as any' para evitar el error de "Property arrayBuffer does not exist on type never"
       finalBuffer = Buffer.from(await (pdfResult as any).arrayBuffer());
     } else if (pdfResult && typeof (pdfResult as any)[Symbol.asyncIterator] === 'function') {
-      // ✅ Corregido con 'as any' para manejar Streams de Node
       const chunks = [];
-      for await (const chunk of (pdfResult as any)) {
-        chunks.push(chunk);
-      }
+      for await (const chunk of (pdfResult as any)) { chunks.push(chunk); }
       finalBuffer = Buffer.concat(chunks);
     } else {
-      // Caso de respaldo: intentamos convertir lo que venga a Buffer
       finalBuffer = Buffer.from(pdfResult as any);
     }
+
+    if (!finalBuffer || finalBuffer.length === 0) {
+      throw new Error("Adobe devolvió un PDF vacío o inválido.");
+    }
+
+    // --- 4. SOLO SI TODO SALIÓ BIEN: REGISTRO DE USO ---
+    // Si Adobe falló arriba, el código salta al catch y nunca llega aquí.
+    console.log("✅ Adobe OK. Actualizando contador de uso...");
+    const { error: rpcError } = await supabase.rpc("increment_adobe_usage");
+    if (rpcError) console.warn("⚠️ Contador no actualizado, pero el PDF es válido:", rpcError);
 
     // --- 5. GUARDAR EL PDF EN PREVIEWS/ ---
     const previewPath = `previews/${templateId}.pdf`;
 
-    // Usamos Uint8Array para asegurar compatibilidad total en el upload
     const { error: uploadError } = await supabase.storage
       .from("templates")
       .upload(previewPath, new Uint8Array(finalBuffer), {
@@ -96,8 +93,6 @@ export async function POST(request: Request) {
       throw new Error("Error actualizando la base de datos");
     }
 
-    console.log("✅ Preview generada con éxito:", templateId);
-    
     return NextResponse.json({ 
       success: true, 
       previewUrl: urlData.publicUrl 

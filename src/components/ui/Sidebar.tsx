@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
+  History,
   FileStack,
   FileText,
   Building2,
@@ -19,6 +20,7 @@ const menuItems = [
   { name: "Catálogos", href: "/catalogos", icon: Book },
   { name: "Plantillas", href: "/plantillas", icon: FileText },
   { name: "Empresas", href: "/empresas", icon: Building2 },
+  { name: "Actividad", href: "/actividad", icon: History },
 ];
 
 interface SidebarProps {
