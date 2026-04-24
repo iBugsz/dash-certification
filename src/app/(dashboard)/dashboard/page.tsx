@@ -84,7 +84,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="p-6 lg:p-10 space-y-8 max-w-[1600px] mx-auto min-h-screen bg-[#fcfcfd] dark:bg-transparent text-slate-900 dark:text-white font-poppins">
+    <div className="p-6 lg:p-10 space-y-8 max-w-400 mx-auto min-h-screen bg-[#fcfcfd] dark:bg-transparent text-slate-900 dark:text-white font-poppins">
       {/* ── HEADER ── */}
       <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-8">
         <header>
@@ -107,7 +107,7 @@ export default function DashboardPage() {
             <motion.div
               key={i}
               whileHover={{ y: -5 }}
-              className="group relative px-5 py-4 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-[2rem] shadow-sm transition-all min-w-[160px]"
+              className="group relative px-5 py-4 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-4xl shadow-sm transition-all min-w-40"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className={`p-2.5 rounded-2xl ${s.bg} ${s.color}`}>
@@ -134,11 +134,11 @@ export default function DashboardPage() {
           {/* 2. INTEGRACIÓN DEL GRÁFICO REAL */}
           <Section
             title="Rendimiento de Generación"
-            className="h-[400px] flex flex-col"
+            className="h-100 flex flex-col"
           >
             <div className="flex-1 w-full pt-4">
               {d.loading ? (
-                <div className="w-full h-full flex items-center justify-center bg-slate-50 dark:bg-white/[0.02] rounded-[2rem] border border-dashed border-slate-200 dark:border-white/10">
+                <div className="w-full h-full flex items-center justify-center bg-slate-50 dark:bg-white/2 rounded-4xl border border-dashed border-slate-200 dark:border-white/10">
                   <div className="flex flex-col items-center gap-3">
                     <Activity
                       size={32}
@@ -182,7 +182,7 @@ export default function DashboardPage() {
           <Section title="Recursos Supabase">
             <div className="space-y-8">
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col items-center p-5 rounded-[2.5rem] bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
+                <div className="flex flex-col items-center p-5 rounded-[2.5rem] bg-slate-50/50 dark:bg-white/2 border border-slate-100 dark:border-white/5">
                   <StorageDonut
                     usedBytes={d.dbUsedBytes}
                     limitBytes={d.dbLimitBytes}
@@ -193,7 +193,7 @@ export default function DashboardPage() {
                     Database
                   </p>
                 </div>
-                <div className="flex flex-col items-center p-5 rounded-[2.5rem] bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
+                <div className="flex flex-col items-center p-5 rounded-[2.5rem] bg-slate-50/50 dark:bg-white/2 border border-slate-100 dark:border-white/5">
                   <StorageDonut
                     usedBytes={d.storageUsedBytes}
                     limitBytes={d.storageLimitBytes}

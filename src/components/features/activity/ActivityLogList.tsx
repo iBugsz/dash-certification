@@ -22,7 +22,7 @@ function PreviewImage({ src }: { src: string }) {
       src={src}
       alt="Preview"
       onError={() => setFailed(true)}
-      className="h-16 w-auto max-w-[120px] object-contain rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-1 shadow-sm"
+      className="h-16 w-auto max-w-30 object-contain rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-1 shadow-sm"
     />
   );
 }
@@ -91,7 +91,7 @@ export function ActivityLogList({ items }: { items: ActivityLog[] }) {
             animate={{ opacity: 1 }}
             className="group flex items-start gap-4 p-4 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-all"
           >
-            <div className="relative flex-shrink-0 mt-1">
+            <div className="relative shrink-0 mt-1">
               <div
                 className={`h-12 w-12 rounded-2xl border flex items-center justify-center ${styles}`}
               >

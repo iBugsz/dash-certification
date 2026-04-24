@@ -74,9 +74,6 @@ export function StorageDonut({
       </div>
 
       <div className="text-center">
-        <p className="text-xs font-bold text-[var(--foreground)] opacity-70">
-          {label}
-        </p>
         <p className="text-[11px] text-[var(--foreground)] opacity-40 mt-0.5">
           {formatBytes(usedBytes)} / {formatBytes(limitBytes)}
         </p>
