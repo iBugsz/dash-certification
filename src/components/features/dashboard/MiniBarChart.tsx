@@ -30,7 +30,7 @@ export function MiniBarChart({
 }: MiniBarChartProps) {
   const chartData = data.length ? data : WEEKLY_DATA;
   const maxValue = Math.max(
-    ...chartData.map((d) => d.value ?? d.count ?? 0),
+    ...chartData.map((d) => (d as any).value ?? (d as any).count ?? 0),
     1,
   );
 
