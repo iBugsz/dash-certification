@@ -37,7 +37,7 @@ export function MiniBarChart({
   return (
     <div className="flex items-end justify-between gap-1.5 h-16 px-1">
       {chartData.map((d, i) => {
-        const pointValue = d.value ?? d.count ?? 0;
+        const pointValue = (d as any).value ?? (d as any).count ?? 0;
         const heightPct = (pointValue / maxValue) * 100;
         const label = d.day ?? d.date ?? "";
         return (
