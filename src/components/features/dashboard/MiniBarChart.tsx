@@ -16,16 +16,33 @@ const MAX_VALUE = Math.max(...WEEKLY_DATA.map((d) => d.value));
 
 interface MiniBarChartProps {
   color?: string;
+  data?: Array<{
+    day?: string;
+    date?: string;
+    value?: number;
+    count?: number;
+  }>;
 }
 
-export function MiniBarChart({ color = "#6366f1" }: MiniBarChartProps) {
+export function MiniBarChart({
+  data = WEEKLY_DATA,
+  color = "#6366f1",
+}: MiniBarChartProps) {
+  const chartData = data.length ? data : WEEKLY_DATA;
+  const maxValue = Math.max(
+    ...chartData.map((d) => d.value ?? d.count ?? 0),
+    1,
+  );
+
   return (
     <div className="flex items-end justify-between gap-1.5 h-16 px-1">
-      {WEEKLY_DATA.map((d, i) => {
-        const heightPct = (d.value / MAX_VALUE) * 100;
+      {chartData.map((d, i) => {
+        const pointValue = d.value ?? d.count ?? 0;
+        const heightPct = (pointValue / maxValue) * 100;
+        const label = d.day ?? d.date ?? "";
         return (
           <div
-            key={d.day}
+            key={label || i}
             className="flex-1 flex flex-col items-center gap-1.5 group"
           >
             <div className="relative w-full flex items-end justify-center h-12">
@@ -40,11 +57,11 @@ export function MiniBarChart({ color = "#6366f1" }: MiniBarChartProps) {
               />
               {/* Tooltip */}
               <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-[var(--card)] border border-[var(--border)] px-1.5 py-0.5 rounded text-[9px] text-[var(--foreground)] font-bold whitespace-nowrap z-20 shadow-sm">
-                {d.value}
+                {pointValue}
               </div>
             </div>
             <span className="text-[9px] text-[var(--foreground)] opacity-30 font-medium">
-              {d.day}
+              {label}
             </span>
           </div>
         );

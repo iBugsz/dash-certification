@@ -14,6 +14,7 @@ export interface DashboardData {
   companies: number;
   templates: number;
   totalCertificates: number;
+  generationTotal: number;
   generationData: any[];
   recentActivity: ActivityLog[];
   dbUsedBytes: number;
@@ -36,6 +37,7 @@ export function useDashboardData(): DashboardData {
     companies: 0,
     templates: 0,
     totalCertificates: 0,
+    generationTotal: 0,
     generationData: [],
     recentActivity: [],
     dbUsedBytes: 0,
@@ -63,7 +65,8 @@ export function useDashboardData(): DashboardData {
           { data: jobs },
           { data: quotaRows },
           { data: statsRaw },
-          { data: generationStats },
+          { data: generationStatsWeekly },
+          { data: generationStatsAll },
           { data: activityLogs },
         ] = await Promise.all([
           supabase.from("companies").select("*", { count: "exact", head: true }),
@@ -82,6 +85,7 @@ export function useDashboardData(): DashboardData {
             .select("date, count")
             .gte("date", startDateStr)
             .order("date", { ascending: true }),
+          supabase.from("generation_stats").select("count"),
           supabase
             .from("activity_logs")
             .select("*")
@@ -101,12 +105,17 @@ export function useDashboardData(): DashboardData {
         });
 
         const formattedGenerationData = last7Days.map(day => {
-          const dbEntry = generationStats?.find(item => item.date === day.dateKey);
+          const dbEntry = generationStatsWeekly?.find(item => item.date === day.dateKey);
           return {
             date: day.label,
             count: dbEntry ? dbEntry.count : 0,
           };
         });
+
+        const generationTotal = (generationStatsAll ?? []).reduce(
+          (sum, row) => sum + Number(row.count ?? 0),
+          0
+        );
 
         // Cálculos de certificados y Adobe
         const totalCertificates = (jobs ?? []).reduce((sum, job) => sum + (job.success_count ?? 0), 0);
@@ -125,6 +134,7 @@ export function useDashboardData(): DashboardData {
           companies: companiesCount ?? 0,
           templates: templatesCount ?? 0,
           totalCertificates,
+          generationTotal,
           generationData: formattedGenerationData,
           recentActivity: (activityLogs as ActivityLog[]) ?? [],
           dbUsedBytes: stats?.db_size_bytes ?? 0,

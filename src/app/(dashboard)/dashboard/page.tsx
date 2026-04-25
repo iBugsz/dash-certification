@@ -15,7 +15,6 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { StorageDonut } from "@/components/features/dashboard/StorageDonut";
 import { BucketBars } from "@/components/features/dashboard/BucketBars";
 import { ActivityFeed } from "@/components/features/dashboard/ActivityFeed";
-import { ServiceGrid } from "@/components/features/dashboard/ServiceGrid";
 import { AdobeQuotaCard } from "@/components/features/dashboard/AdobeQuotaCard";
 // 1. Importa tu nuevo componente
 import { GenerationChart } from "@/components/features/dashboard/GenerationChart";
@@ -47,6 +46,17 @@ function Section({
 
 export default function DashboardPage() {
   const d = useDashboardData();
+  const totalUsedBytes = d.dbUsedBytes + d.storageUsedBytes;
+  const totalLimitBytes = d.dbLimitBytes + d.storageLimitBytes;
+  const dbPct = d.dbLimitBytes
+    ? Math.round((d.dbUsedBytes / d.dbLimitBytes) * 100)
+    : 0;
+  const storagePct = d.storageLimitBytes
+    ? Math.round((d.storageUsedBytes / d.storageLimitBytes) * 100)
+    : 0;
+  const combinedPct = totalLimitBytes
+    ? Math.round((totalUsedBytes / totalLimitBytes) * 100)
+    : 0;
 
   const stats = [
     {
@@ -56,6 +66,8 @@ export default function DashboardPage() {
       color: "text-blue-500",
       bg: "bg-blue-50 dark:bg-blue-500/10",
       trend: "+2",
+      detail: "Empresas activas",
+      showBar: false,
     },
     {
       label: "Plantillas",
@@ -64,14 +76,18 @@ export default function DashboardPage() {
       color: "text-violet-500",
       bg: "bg-violet-50 dark:bg-violet-500/10",
       trend: "4",
+      detail: "Plantillas listas",
+      showBar: false,
     },
     {
       label: "Generaciones",
-      val: d.totalCertificates,
+      val: d.generationTotal,
       icon: Zap,
       color: "text-emerald-500",
       bg: "bg-emerald-50 dark:bg-emerald-500/10",
       trend: "12",
+      detail: "Total generado",
+      showBar: false,
     },
     {
       label: "Espacio Total",
@@ -80,57 +96,71 @@ export default function DashboardPage() {
       color: "text-amber-500",
       bg: "bg-amber-50 dark:bg-amber-500/10",
       trend: "Free",
+      detail: `DB ${dbPct}% · Storage ${storagePct}%`,
+      progress: combinedPct,
+      showBar: true,
     },
   ];
 
   return (
     <div className="p-6 lg:p-10 space-y-8 max-w-400 mx-auto min-h-screen bg-[#fcfcfd] dark:bg-transparent text-slate-900 dark:text-white font-poppins">
-      {/* ── HEADER ── */}
-      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-8">
-        <header>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 mb-4">
-            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase">
-              Sistema Operativo v2.1
-            </span>
-          </div>
-          <h1 className="text-4xl font-black tracking-tight">
-            Panel de Control
-          </h1>
-          <p className="text-slate-400 text-sm font-medium mt-2">
-            Gestión de recursos y métricas del sistema
-          </p>
-        </header>
+      <header className="space-y-4">
+        <h1 className="text-4xl font-black tracking-tight">Panel de Control</h1>
+        <p className="max-w-2xl text-sm text-slate-500 dark:text-slate-300">
+          Reorganiza y visualiza la información clave del dashboard con un
+          estilo más limpio y actual, manteniendo el gráfico de generación en su
+          posición.
+        </p>
+      </header>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full xl:w-auto">
-          {stats.map((s, i) => (
-            <motion.div
-              key={i}
-              whileHover={{ y: -5 }}
-              className="group relative px-5 py-4 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-4xl shadow-sm transition-all min-w-40"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className={`p-2.5 rounded-2xl ${s.bg} ${s.color}`}>
-                  <s.icon size={18} />
-                </div>
-                <div className="text-[10px] font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-lg flex items-center">
-                  <ChevronUp size={10} className="mr-0.5" />
-                  {s.trend}
-                </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+        {stats.map((s, i) => (
+          <motion.div
+            key={i}
+            whileHover={{ y: -5 }}
+            className="group relative px-6 py-5 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-[2rem] shadow-sm transition-all"
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div className={`p-3 rounded-2xl ${s.bg} ${s.color}`}>
+                <s.icon size={18} />
               </div>
-              <p className="text-[11px] font-bold text-slate-400 uppercase mb-1">
-                {s.label}
-              </p>
-              <span className="text-2xl font-black tracking-tighter">
+              <div className="text-[10px] font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-lg flex items-center">
+                <ChevronUp size={10} className="mr-0.5" />
+                {s.trend}
+              </div>
+            </div>
+            <p className="text-[11px] font-bold text-slate-400 uppercase mb-2">
+              {s.label}
+            </p>
+            <div className="flex items-baseline justify-between gap-4">
+              <span className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white">
                 {d.loading ? "..." : s.val}
               </span>
-            </motion.div>
-          ))}
-        </div>
+              <span className="text-[10px] uppercase text-slate-400">
+                {s.detail}
+              </span>
+            </div>
+            <div className="mt-4">
+              {s.showBar ? (
+                <div className="space-y-2">
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-slate-900 to-slate-500 dark:from-slate-200 dark:to-slate-400"
+                      style={{ width: `${s.progress ?? 100}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400">{s.detail}</p>
+                </div>
+              ) : (
+                <p className="text-[10px] text-slate-400">{s.detail}</p>
+              )}
+            </div>
+          </motion.div>
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 space-y-6">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+        <div className="xl:col-span-8 space-y-6">
           {/* 2. INTEGRACIÓN DEL GRÁFICO REAL */}
           <Section
             title="Rendimiento de Generación"
@@ -155,67 +185,66 @@ export default function DashboardPage() {
             </div>
           </Section>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Section title="Actividad del Sistema">
-              <ActivityFeed items={d.recentActivity} />
-            </Section>
-
-            <Section title="Cuota de Adobe PDF">
-              <AdobeQuotaCard used={d.adobeUsed} limit={d.adobeLimit} />
-              <div className="mt-6 p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/10">
-                <div className="flex items-center gap-3 text-amber-600 dark:text-amber-400">
-                  <FileText size={16} />
-                  <p className="text-[10px] font-bold uppercase">Sugerencia</p>
-                </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
-                  Has utilizado el **
-                  {Math.round((d.adobeUsed / d.adobeLimit) * 100)}%** de tu
-                  cuota mensual. Optimiza tus plantillas para reducir el peso de
-                  los documentos.
-                </p>
-              </div>
-            </Section>
-          </div>
+          <Section title="Actividad del Sistema">
+            <ActivityFeed items={d.recentActivity} />
+          </Section>
         </div>
 
-        <div className="lg:col-span-4 space-y-6">
-          <Section title="Recursos Supabase">
-            <div className="space-y-8">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col items-center p-5 rounded-[2.5rem] bg-slate-50/50 dark:bg-white/2 border border-slate-100 dark:border-white/5">
+        <div className="xl:col-span-4 space-y-6">
+          <Section title="Cuota de Adobe PDF">
+            <div className="rounded-[2rem] bg-amber-50/70 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/10 p-5 shadow-sm">
+              <div className="flex items-center gap-3 text-amber-600 dark:text-amber-300">
+                <FileText size={16} />
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em]">
+                  Uso actual
+                </p>
+              </div>
+              <div className="mt-4">
+                <AdobeQuotaCard used={d.adobeUsed} limit={d.adobeLimit} />
+                <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-3 leading-relaxed">
+                  Has utilizado el{" "}
+                  {Math.round((d.adobeUsed / d.adobeLimit) * 100)}% de tu cuota
+                  mensual. Optimiza tus plantillas para reducir el peso de los
+                  documentos.
+                </p>
+              </div>
+            </div>
+          </Section>
+
+          <Section title="Recursos Supabase" className="space-y-6">
+            <div className="grid grid-cols-1 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col items-center p-6 rounded-[2rem] bg-slate-50/90 dark:bg-white/5 border border-slate-100 dark:border-white/5 shadow-sm">
                   <StorageDonut
                     usedBytes={d.dbUsedBytes}
                     limitBytes={d.dbLimitBytes}
                     color="#6366f1"
-                    size={80}
+                    size={90}
                   />
                   <p className="text-[10px] font-bold text-slate-400 uppercase mt-4">
                     Database
                   </p>
                 </div>
-                <div className="flex flex-col items-center p-5 rounded-[2.5rem] bg-slate-50/50 dark:bg-white/2 border border-slate-100 dark:border-white/5">
+                <div className="flex flex-col items-center p-6 rounded-[2rem] bg-slate-50/90 dark:bg-white/5 border border-slate-100 dark:border-white/5 shadow-sm">
                   <StorageDonut
                     usedBytes={d.storageUsedBytes}
                     limitBytes={d.storageLimitBytes}
                     color="#22d3ee"
-                    size={80}
+                    size={90}
                   />
                   <p className="text-[10px] font-bold text-slate-400 uppercase mt-4">
                     Storage
                   </p>
                 </div>
               </div>
-              <div className="pt-4 border-t border-slate-100 dark:border-white/5">
+
+              <div className="rounded-[2rem] bg-slate-50/90 dark:bg-white/5 border border-slate-100 dark:border-white/5 p-5 shadow-sm">
                 <p className="text-[11px] font-bold text-slate-400 uppercase mb-4">
                   Desglose Buckets
                 </p>
                 <BucketBars buckets={d.buckets} />
               </div>
             </div>
-          </Section>
-
-          <Section title="Servicios de Infraestructura">
-            <ServiceGrid />
           </Section>
         </div>
       </div>

@@ -7,5 +7,6 @@ export function formatBytes(bytes: number, decimals = 1): string {
 }
 
 export function pct(used: number, limit: number): number {
-  return Math.min(Math.round((used / limit) * 100 * 10) / 10, 100);
+  const percent = Math.min((used / limit) * 100, 100);
+  return percent < 1 ? Math.round(percent * 10) / 10 : Math.round(percent);
 }

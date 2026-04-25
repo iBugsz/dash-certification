@@ -53,6 +53,17 @@ export default function UserMenu({
       {/* Trigger Principal */}
       <button
         onClick={() => setOpen((p) => !p)}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLElement).style.background =
+            "var(--sidebar-user-hover)";
+          (e.currentTarget as HTMLElement).style.color = "var(--sidebar-fg)";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLElement).style.background = open
+            ? "var(--sidebar-user-hover)"
+            : "transparent";
+          (e.currentTarget as HTMLElement).style.color = "var(--sidebar-fg)";
+        }}
         className={`w-full flex items-center cursor-pointer transition-all duration-200 text-left ${
           isCollapsed
             ? "justify-center px-0 py-4"

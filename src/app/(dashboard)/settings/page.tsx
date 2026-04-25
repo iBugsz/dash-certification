@@ -7,14 +7,18 @@ import {
   UserRound,
   CreditCard,
   HelpCircle,
+  Edit3,
 } from "lucide-react";
 import { useSettings } from "@/hooks/useSettings";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import { ToastBanner } from "@/components/features/settings/ToastBanner";
 import { ProfileSection } from "@/components/features/settings/ProfileSection";
 import { AppearanceSection } from "@/components/features/settings/AppearanceSection";
 import { NotificationsSection } from "@/components/features/settings/NotificationsSection";
 import { SidebarInfo } from "@/components/features/settings/SidebarInfo";
 import { AccountTab } from "@/components/features/settings/AccountTab"; // Importamos el nuevo componente
+import { Section } from "@/components/features/settings/Section";
+import { Field, inputCls } from "@/components/features/settings/Field";
 
 const TABS = [
   { id: "general", label: "General", icon: Settings2 },
@@ -25,12 +29,13 @@ const TABS = [
 
 export default function SettingsPage() {
   const s = useSettings();
+  const appSettings = useAppSettings();
   const [activeTab, setActiveTab] = useState("general");
 
-  if (s.loadingUser) {
+  if (s.loadingUser || appSettings.loadingAppName) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="animate-spin text-[var(--accent)]" size={28} />
+        <Loader2 className="animate-spin text-(--accent)" size={28} />
       </div>
     );
   }
@@ -45,12 +50,11 @@ export default function SettingsPage() {
             Configuración
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Gestiona tu cuenta y preferencias de AutoCert Pro.
+            Gestiona tu cuenta y preferencias de {appSettings.appName || "AutoCert Pro"}.
           </p>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Menú Lateral */}
           <aside className="w-full lg:w-64 flex flex-row lg:flex-col gap-1 overflow-x-auto pb-2 lg:pb-0">
             {TABS.map((tab) => {
               const Icon = tab.icon;
@@ -60,7 +64,7 @@ export default function SettingsPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex cursor-pointer items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
                     activeTab === tab.id
-                      ? "bg-[var(--accent)] text-white shadow-lg shadow-[var(--accent-ring)]"
+                      ? "bg-(--accent) text-white shadow-lg"
                       : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
                   }`}
                 >
@@ -90,6 +94,42 @@ export default function SettingsPage() {
                   onAvatarChange={s.handleAvatarChange}
                   onSave={s.saveProfile}
                 />
+
+                <Section
+                  icon={<Edit3 size={17} />}
+                  iconBg="bg-sky-100 dark:bg-sky-950/40"
+                  iconColor="text-sky-600 dark:text-sky-400"
+                  title="Nombre de la empresa"
+                >
+                  <div className="space-y-5">
+                    <Field label="Nombre de la aplicación">
+                      <input
+                        type="text"
+                        value={appSettings.appName}
+                        onChange={(e) => appSettings.setAppName(e.target.value)}
+                        className={inputCls}
+                        placeholder="Nombre de la app"
+                      />
+                    </Field>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await appSettings.saveAppName(appSettings.appName);
+                        } catch (error) {
+                          console.error(error);
+                        }
+                      }}
+                      disabled={appSettings.savingAppName}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-(--accent) hover:bg-(--accent-hover) text-white text-[13px] font-semibold transition-all"
+                    >
+                      {appSettings.savingAppName ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        "Guardar nombre"
+                      )}
+                    </button>
+                  </div>
+                </Section>
 
                 <AppearanceSection
                   theme={s.theme}
