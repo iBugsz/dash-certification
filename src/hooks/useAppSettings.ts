@@ -41,7 +41,7 @@ export function useAppSettings() {
     try {
       const { error } = await supabase
         .from("app_settings")
-        .upsert({ key: "app_name", value: newName.trim() }, { onConflict: "key", returning: "minimal" });
+        .upsert({ key: "app_name", value: newName.trim() }, { onConflict: "key" });
 
       if (error) {
         throw error;
