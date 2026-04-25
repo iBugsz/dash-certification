@@ -39,7 +39,7 @@ export function MiniBarChart({
       {chartData.map((d, i) => {
         const pointValue = (d as any).value ?? (d as any).count ?? 0;
         const heightPct = (pointValue / maxValue) * 100;
-        const label = d.day ?? d.date ?? "";
+        const label = (d as any).day ?? (d as any).date ?? "";
         return (
           <div
             key={label || i}
