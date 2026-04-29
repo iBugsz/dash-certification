@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import { Poppins, Geist } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/providers/ThemeProvider"; //
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -22,7 +25,7 @@ export default function RootLayout({
        al cambiar entre temas de luz y oscuridad en el cliente. */
     <html
       lang="es"
-      className={`${poppins.variable} h-full antialiased`}
+      className={cn("h-full", "antialiased", poppins.variable, "font-sans", geist.variable)}
       suppressHydrationWarning
     >
       <body className="font-poppins transition-colors duration-300">

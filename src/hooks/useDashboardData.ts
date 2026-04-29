@@ -27,8 +27,8 @@ export interface DashboardData {
   loading: boolean;
 }
 
-const DB_LIMIT    = 500  * 1024 * 1024; // 500MB
-const STORE_LIMIT = 1024 * 1024 * 1024; // 1GB
+const DB_LIMIT    = 500  * 1024 * 1024;
+const STORE_LIMIT = 1024 * 1024 * 1024;
 
 const ALL_BUCKETS = ["templates", "logos", "generated", "catalogs"];
 
@@ -58,7 +58,6 @@ export function useDashboardData(): DashboardData {
         sevenDaysAgo.setDate(now.getDate() - 6);
         const startDateStr = sevenDaysAgo.toISOString().split('T')[0];
 
-        // ✅ PROMISE.ALL - Incluye actividad, estadísticas y datos generales
         const [
           { count: companiesCount },
           { count: templatesCount },
@@ -93,7 +92,6 @@ export function useDashboardData(): DashboardData {
             .limit(5),
         ]);
 
-        // Lógica de fechas para la gráfica (se mantiene igual)
         const last7Days = Array.from({ length: 7 }, (_, i) => {
           const d = new Date();
           d.setDate(d.getDate() - (6 - i));
@@ -117,12 +115,10 @@ export function useDashboardData(): DashboardData {
           0
         );
 
-        // Cálculos de certificados y Adobe
         const totalCertificates = (jobs ?? []).reduce((sum, job) => sum + (job.success_count ?? 0), 0);
         const adobeUsed = Number(quotaRows?.find((r) => r.key === "adobe_pdf_quota_used")?.value ?? 0);
         const adobeLimit = Number(quotaRows?.find((r) => r.key === "adobe_pdf_quota_limit")?.value ?? 500);
 
-        // Stats de storage
         const stats = statsRaw as any;
         const fetchedBuckets: BucketStat[] = stats?.buckets ?? [];
         const mergedBuckets = ALL_BUCKETS.map((name) => {
@@ -151,7 +147,35 @@ export function useDashboardData(): DashboardData {
         setData((prev) => ({ ...prev, loading: false }));
       }
     }
+
     load();
+
+    // Realtime — solo escucha activity_logs y actualiza esa parte del estado
+    const channel = supabase
+      .channel("dashboard_activity_realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "activity_logs" },
+        async () => {
+          const { data: activityLogs } = await supabase
+            .from("activity_logs")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .limit(5);
+
+          if (activityLogs) {
+            setData((prev) => ({
+              ...prev,
+              recentActivity: activityLogs as ActivityLog[],
+            }));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return data;

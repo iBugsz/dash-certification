@@ -1,0 +1,73 @@
+:root {
+  /* --- MODO CLARO (Yann UI/UX) --- */
+  --background: #fdfdfd5e;
+  --foreground: #1b2559;
+  --card: #ffffff;
+  --border: #e9edf7;
+  --navbar-glass: rgba(255, 255, 255, 0.85);
+  --input-bg: #f4f7fe;
+  --input-bg-focus: #ffffff;
+
+  --accent: #4318ff;
+  --accent-dark: #2b08d4;
+  --accent-hover: #3a10e5;
+  --accent-soft: rgba(67, 24, 255, 0.08);
+  --accent-ring: rgba(67, 24, 255, 0.2);
+
+  /* Sidebar Light */
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #f4f7fe;
+  --sidebar-fg: #1b2559;
+  --sidebar-fg-muted: #a3aed0;
+  --sidebar-fg-hover: #4318ff;
+  --sidebar-active-bg: #f4f7fe;
+  --sidebar-active-fg: #4318ff;
+  --sidebar-active-icon: #4318ff;
+  --sidebar-logo-text: #1b2559;
+  --sidebar-divider: #f4f7fe;
+  --sidebar-shadow: 14px 17px 40px 4px rgba(112, 144, 176, 0.08);
+  --sidebar-user-name: #1b2559;
+  --sidebar-user-role: #a3aed0;
+
+  /* Hover del botón de usuario */
+  --sidebar-user-hover: #8d8d8d63;
+
+  --background: #f4f7fe; /* Un poco más de color al fondo para que resalte el blanco */
+  --card: #ffffff;
+
+  /* BORDES: Cámbialo de #e9edf7 a algo un pelín más oscuro para que se vea el contorno */
+  --border: #dce3f1;
+}
+
+.dark {
+  /* --- MODO OSCURO (Sólido y sin líneas blancas) --- */
+  --background: #171717; /* Negro fondo principal */
+  --foreground: #f4f7fe; /* Texto claro */
+  --card: #212121; /* Negro grisáceo para tarjetas */
+
+  /* BORDES: Cambiados de blanco a un gris muy sutil que casi no se vea */
+  --border: rgba(255, 255, 255, 0.05);
+
+  /* NAVBAR & INPUTS: Arreglado para que no salgan botones blancos */
+  --navbar-glass: rgba(23, 23, 23, 0.8);
+  --input-bg: #2a2a2a;
+  --input-bg-focus: #333333;
+
+  /* ACCENT: En modo oscuro el acento debe ser sutil o blanco puro */
+  --accent: #4318ff;
+  --accent-hover: #3a10e5;
+
+  /* SIDEBAR DARK: Eliminando líneas y ajustando selección */
+  --sidebar-bg: #171717;
+  --sidebar-border: rgba(255, 255, 255, 0.03); /* Casi invisible */
+  --sidebar-fg: rgba(255, 255, 255, 0.5);
+  --sidebar-fg-hover: #ffffff;
+  --sidebar-active-bg: #000000; /* Fondo negro puro para el item activo */
+  --sidebar-active-fg: #ffffff;
+  --sidebar-active-icon: #ffffff;
+  --sidebar-divider: rgba(255, 255, 255, 0.03);
+
+  /* USER MENU HOVER */
+  --sidebar-user-hover: #000000; /* Negro para el hover del usuario */
+  --sidebar-user-name: rgba(255, 255, 255, 0.9);
+}

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ActivityLogList } from "./ActivityLogList";
 import { ActivityFilter } from "./ActivityFilter";
+import { supabase } from "@/lib/supabaseClient";
 import {
   ActivityLog,
   ActivityAction,
@@ -19,12 +20,33 @@ export function ActivityPageClient({
 }: {
   initialLogs: ActivityLog[];
 }) {
-  // Estado para controlar los filtros seleccionados
+  const [logs, setLogs] = useState<ActivityLog[]>(initialLogs);
   const [filters, setFilters] = useState<Filters>({});
 
-  // Filtrado reactivo: useMemo asegura que solo se recalcule si cambian los filtros o los logs
+  useEffect(() => {
+    const channel = supabase
+      .channel("activity_page_realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "activity_logs" },
+        async () => {
+          const { data } = await supabase
+            .from("activity_logs")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+          if (data) setLogs(data as ActivityLog[]);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const filteredLogs = useMemo(() => {
-    return initialLogs.filter((log) => {
+    return logs.filter((log) => {
       const matchAction = filters.action
         ? log.action_type === filters.action
         : true;
@@ -33,14 +55,12 @@ export function ActivityPageClient({
         : true;
       return matchAction && matchEntity;
     });
-  }, [filters, initialLogs]);
+  }, [filters, logs]);
 
   return (
     <div className="bg-white dark:bg-[#0c0c0e]/60 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[40px] shadow-sm overflow-hidden">
-      {/* Componente de Filtros (superior) */}
       <ActivityFilter activeFilters={filters} onFilterChange={setFilters} />
 
-      {/* Barra de estado de resultados */}
       <div className="p-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/30 dark:bg-white/1">
         <div className="flex items-center gap-2 ml-2">
           <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
@@ -49,7 +69,6 @@ export function ActivityPageClient({
           </h2>
         </div>
 
-        {/* Badge indicador si hay filtros activos */}
         {(filters.action || filters.entity) && (
           <span className="text-[10px] bg-amber-500/10 text-amber-600 px-2 py-1 rounded-md font-bold border border-amber-500/20">
             FILTRADO ACTIVO
@@ -57,7 +76,6 @@ export function ActivityPageClient({
         )}
       </div>
 
-      {/* Lista de Logs (cuerpo) */}
       <div className="min-h-112.5">
         {filteredLogs.length > 0 ? (
           <ActivityLogList items={filteredLogs} />
@@ -76,7 +94,6 @@ export function ActivityPageClient({
         )}
       </div>
 
-      {/* Footer informativo interno */}
       <div className="p-4 bg-slate-50/30 dark:bg-white/1 border-t border-slate-100 dark:border-white/5">
         <p className="text-[10px] text-slate-400 text-center font-medium">
           Los datos mostrados corresponden al historial completo almacenado en

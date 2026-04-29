@@ -1,0 +1,93 @@
+.app-sidebar {
+  background-color: var(--sidebar-bg);
+  color: var(--sidebar-fg);
+  border-right: 1px solid var(--sidebar-border);
+  box-shadow: var(--sidebar-shadow);
+  transition: all 0.3s ease;
+}
+
+.app-sidebar__logo-text {
+  font-weight: 800;
+  font-size: 0.9375rem;
+  letter-spacing: -0.02em;
+  color: var(--sidebar-logo-text);
+}
+
+.app-sidebar__section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--sidebar-fg-muted);
+  padding-left: 12px;
+  margin-bottom: 8px;
+  letter-spacing: 0.05em;
+}
+
+.app-sidebar__link {
+  display: flex;
+  align-items: center;
+  border-radius: 0.75rem;
+  height: 2.75rem;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--sidebar-fg) !important;
+  padding: 0 16px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.app-sidebar__link span,
+.app-sidebar__link p {
+  color: inherit !important;
+  font-weight: inherit;
+}
+
+.app-sidebar__link:hover {
+  background-color: var(--sidebar-hover-bg);
+  color: var(--sidebar-fg-hover) !important;
+}
+
+.app-sidebar__link--active {
+  background-color: var(--sidebar-active-bg) !important;
+  color: var(--sidebar-active-fg) !important;
+  font-weight: 600;
+}
+
+.app-sidebar__link--active .app-sidebar__link-icon {
+  color: var(--sidebar-active-icon);
+  stroke-width: 2.5px;
+}
+
+/* --- LOGICA DEL BOTON DE USUARIO (FOOTER) --- */
+.app-sidebar__user-trigger {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.app-sidebar__user-trigger:hover {
+  background-color: var(--sidebar-user-hover);
+}
+
+/* Estado cuando el menú está abierto */
+.app-sidebar__user-trigger[data-state="open"] {
+  background-color: var(--sidebar-user-hover);
+  border-color: var(--sidebar-border);
+}
+
+.app-sidebar__user-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--sidebar-user-name);
+}
+
+.app-sidebar__user-role {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--sidebar-user-role);
+}

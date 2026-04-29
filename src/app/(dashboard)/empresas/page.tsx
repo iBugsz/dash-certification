@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, Plus } from "lucide-react";
+import { useSearchParams } from "next/navigation"; // Importante para leer el Navbar
+import { Building2, Plus, SearchX } from "lucide-react";
 import { Company } from "@/lib/companies/types";
 import { useCompanies } from "@/hooks/useCompanies";
 import CompanyCard from "@/components/features/companies/CompanyCard";
@@ -12,6 +13,17 @@ export default function CompaniesPage() {
   const { companies, loading, saveCompany, deleteCompany } = useCompanies();
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Company | null>(null);
+
+  // --- LÓGICA DE BÚSQUEDA SINCRONIZADA ---
+  const searchParams = useSearchParams();
+  const query = searchParams.get("q")?.toLowerCase() || "";
+
+  // Filtramos las empresas basándonos en la "q" de la URL
+  const filteredCompanies = companies.filter(
+    (c) =>
+      c.name.toLowerCase().includes(query) ||
+      c.nit?.toLowerCase().includes(query),
+  );
 
   const openCreate = () => {
     setEditing(null);
@@ -44,22 +56,37 @@ export default function CompaniesPage() {
         </button>
       </div>
 
-      {/* Grid */}
+      {/* Grid con Lógica de Filtrado */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
             <CompanyCardSkeleton key={i} />
           ))}
         </div>
-      ) : companies.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-slate-400 dark:text-slate-600">
-          <Building2 size={56} className="mb-4 opacity-30" />
-          <p className="text-lg font-medium">No hay empresas registradas</p>
-          <p className="text-sm">Crea la primera con el botón de arriba</p>
+      ) : filteredCompanies.length === 0 ? (
+        /* Estado vacío: Diferenciamos entre "no hay nada" y "no se encontró lo buscado" */
+        <div className="flex flex-col items-center justify-center py-24 text-slate-400 dark:text-slate-600 text-center">
+          {query ? (
+            <>
+              <SearchX size={56} className="mb-4 opacity-30" />
+              <p className="text-lg font-medium">
+                No se encontraron resultados
+              </p>
+              <p className="text-sm">
+                No hay empresas que coincidan con "{query}"
+              </p>
+            </>
+          ) : (
+            <>
+              <Building2 size={56} className="mb-4 opacity-30" />
+              <p className="text-lg font-medium">No hay empresas registradas</p>
+              <p className="text-sm">Crea la primera con el botón de arriba</p>
+            </>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {companies.map((company) => (
+          {filteredCompanies.map((company) => (
             <CompanyCard
               key={company.id}
               company={company}

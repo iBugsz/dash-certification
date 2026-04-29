@@ -58,7 +58,6 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                autoComplete="current-password"
                 className="w-full px-4 py-2.5 pr-11 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#8633FF] transition bg-transparent dark:text-white placeholder:dark:text-gray-500"
               />
               <button
