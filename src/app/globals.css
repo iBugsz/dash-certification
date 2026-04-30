@@ -26,6 +26,73 @@
     box-shadow: var(--sidebar-shadow);
     border-radius: 1.25rem;
   }
+
+  /* Calendar selected day - force purple background */
+  [data-slot="calendar"] button[data-selected="true"],
+  [data-slot="calendar"] .rdp-day_button[data-selected="true"],
+  [data-slot="calendar"] button[aria-selected="true"],
+  .rdp-root .rdp-day_button[aria-selected="true"],
+  [data-slot="calendar"] [data-selected="true"] {
+    background-color: #8633ff !important;
+    color: white !important;
+    border-radius: 9999px !important;
+  }
+
+  /* Fallback para el día seleccionado */
+  .rdp-button_selected,
+  button.rdp-selected,
+  [data-slot="calendar"] .rdp-selected {
+    background-color: #8633ff !important;
+    color: white !important;
+  }
+}
+
+/* ── CalendarWidget day buttons ── */
+.cal-day {
+  height: 2.5rem;
+  width: 2.5rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+  border: 2px solid transparent;
+  background-color: transparent;
+  color: inherit;
+}
+
+.cal-day:hover:not(.cal-day--selected) {
+  background-color: #f3e8ff;
+  color: #000000;
+}
+
+.dark .cal-day:hover:not(.cal-day--selected) {
+  background-color: rgba(134, 51, 255, 0.12);
+  color: #a855f7;
+}
+
+.cal-day--today {
+  border-color: #8633ff;
+  color: #8633ff;
+  font-weight: 700;
+  background-color: #ede9fe;
+}
+
+.dark .cal-day--today {
+  background-color: rgba(134, 51, 255, 0.15);
+}
+
+.cal-day--selected {
+  background-color: #000000 !important;
+  color: white !important;
+  font-weight: 700;
+  border-color: transparent !important;
 }
 
 html,

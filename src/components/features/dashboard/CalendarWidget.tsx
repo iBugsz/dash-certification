@@ -28,13 +28,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
-const CALENDAR_STYLES = {
-  day: "h-10 w-10 p-0 font-medium rounded-full flex items-center justify-center transition-all text-sm hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300",
-  selected:
-    "!bg-[#8633FF] !text-red-500 dark:!bg-white dark:!text-black font-bold shadow-md rounded-full opacity-100",
-  today:
-    "bg-violet-100 dark:bg-violet-500/20 !text-[#8633FF] font-bold ring-1 ring-violet-200 dark:ring-violet-500/30",
-};
 export function CalendarWidget() {
   const [date, setDate] = React.useState<Date | undefined>(new Date());
   const [view, setView] = React.useState<"month" | "week">("month");
@@ -82,7 +75,7 @@ export function CalendarWidget() {
     <div className="bg-white dark:bg-[#111113] border-[length:var(--border-width)] border-[var(--border)] rounded-[24px] p-6 shadow-sm flex flex-col font-poppins h-fit transition-all duration-300 w-full max-w-[400px] mx-auto">
       {/* HEADER */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-[15px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <h3 className="text-[15px] font-bold text-[#8633FF] flex items-center gap-2">
           <div className="p-2 bg-violet-100 dark:bg-violet-500/10 rounded-lg">
             <CalendarIcon size={16} className="text-[#8633FF]" />
           </div>
@@ -90,18 +83,27 @@ export function CalendarWidget() {
         </h3>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400">
+            <button className="h-8 w-8 flex cursor-pointer items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400">
               <MoreVertical size={18} />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="rounded-xl min-w-[160px]">
-            <DropdownMenuItem onClick={() => setView("month")}>
+          <DropdownMenuContent
+            align="end"
+            className="rounded-xl min-w-[160px] "
+          >
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => setView("month")}
+            >
               Vista Mensual{" "}
               {view === "month" && (
                 <Check size={14} className="ml-auto text-[#8633FF]" />
               )}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setView("week")}>
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => setView("week")}
+            >
               Vista Semanal{" "}
               {view === "week" && (
                 <Check size={14} className="ml-auto text-[#8633FF]" />
@@ -118,7 +120,7 @@ export function CalendarWidget() {
             <div className="relative flex justify-center items-center h-10 mb-2 w-full">
               <button
                 onClick={() => setWeekBase(subWeeks(weekBase, 1))}
-                className="absolute left-0 h-7 w-7 flex items-center justify-center opacity-60 hover:opacity-100"
+                className="absolute cursor-pointer left-0 h-7 w-7 flex items-center justify-center opacity-60 hover:opacity-100"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -127,7 +129,7 @@ export function CalendarWidget() {
               </span>
               <button
                 onClick={() => setWeekBase(addWeeks(weekBase, 1))}
-                className="absolute right-0 h-7 w-7 flex items-center justify-center opacity-60 hover:opacity-100"
+                className="absolute cursor-pointer right-0 h-7 w-7 flex items-center justify-center opacity-60 hover:opacity-100"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -158,13 +160,9 @@ export function CalendarWidget() {
                     key={i}
                     onClick={() => handleSelectDate(new Date(day))}
                     className={cn(
-                      CALENDAR_STYLES.day,
-                      // Seleccionado tiene prioridad sobre today
-                      isSelected
-                        ? CALENDAR_STYLES.selected
-                        : isToday
-                          ? CALENDAR_STYLES.today
-                          : "",
+                      "cal-day",
+                      isToday && !isSelected && "cal-day--today",
+                      isSelected && "cal-day--selected",
                     )}
                   >
                     {day.getDate()}
@@ -199,41 +197,22 @@ export function CalendarWidget() {
                 "text-slate-400 w-10 font-medium text-[12px] capitalize text-center",
               row: "flex justify-center gap-1 mt-2",
               cell: "h-10 w-10 p-0 relative flex items-center justify-center",
-              day: "relative flex items-center justify-center p-0 [&[data-selected]]:bg-transparent [&[data-today]]:bg-transparent",
-              selected: "[&]:bg-transparent",
+              day: "relative flex items-center justify-center p-0",
               day_outside: "opacity-30",
             }}
             components={{
-              IconLeft: () => <ChevronLeft className="h-4 w-4" />,
-              IconRight: () => <ChevronRight className="h-4 w-4" />,
-              DayButton: ({ day, modifiers, className, ...props }) => {
-                // Comparar directo con el state, no con modifiers
-                const isSelected = date ? isSameDay(day.date, date) : false;
+              DayButton: ({ className, day, modifiers, ...props }) => {
+                const isSelected = date && isSameDay(day.date, date);
                 const isToday = isSameDay(day.date, new Date());
                 return (
                   <button
                     {...props}
-                    style={
-                      isSelected
-                        ? {
-                            backgroundColor: "#8633FF",
-                            color: "white",
-                            borderRadius: "100%",
-                          }
-                        : undefined
-                    }
                     className={cn(
-                      CALENDAR_STYLES.day,
-                      isSelected
-                        ? CALENDAR_STYLES.selected
-                        : isToday
-                          ? CALENDAR_STYLES.today
-                          : "",
-                      "disabled:opacity-50",
+                      "cal-day",
+                      isToday && !isSelected && "cal-day--today",
+                      isSelected && "cal-day--selected",
                     )}
-                  >
-                    {day.date.getDate()}
-                  </button>
+                  />
                 );
               },
             }}

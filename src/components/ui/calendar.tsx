@@ -188,7 +188,7 @@ function Calendar({
 }
 
 function CalendarDayButton({
-  className, // ← desestructura y descarta
+  className, // ← ya no lo descartes
   day,
   modifiers,
   locale,
@@ -203,8 +203,8 @@ function CalendarDayButton({
     <button
       ref={ref}
       data-day={day.date.toLocaleDateString(locale?.code)}
+      className={className} // ← agregar esto
       {...props}
-      // className NO se pasa, queda limpio
     />
   );
 }
