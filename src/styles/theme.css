@@ -30,13 +30,18 @@
   --sidebar-user-role: #a3aed0;
 
   /* Hover del botón de usuario */
-  --sidebar-user-hover: #8d8d8d63;
+  --sidebar-user-hover: #ebebf0;
 
   --background: #f4f7fe; /* Un poco más de color al fondo para que resalte el blanco */
   --card: #ffffff;
 
-  /* BORDES: Cámbialo de #e9edf7 a algo un pelín más oscuro para que se vea el contorno */
+  /* BORDES: Más oscuro para mejor contraste */
   --border: #dce3f1;
+
+  /* Botones con mejor contraste */
+  --button-bg: #f4f7fe;
+  --button-text: #1b2559;
+  --button-hover: #e8eef9;
 }
 
 .dark {

@@ -1,148 +1,186 @@
-// src/components/features/certificates/CertificateSelectors.tsx
-import {
-  Building2,
-  FileText,
-  CheckCircle2,
-  Layers3,
-  SearchX,
-  ArrowRightLeft,
-  Sparkles,
-} from "lucide-react";
-import type { Company, Template } from "@/lib/certificates/types";
+"use client";
 
-interface CertificateSelectorsProps {
-  companies: Company[];
-  selectedCompany: Company | null;
-  setSelectedCompany: (company: Company | null) => void;
-  loadingCompanies: boolean;
-  templates: Template[];
-  selectedTemplate: Template | null;
-  setSelectedTemplate: (template: Template | null) => void;
-  loadingTemplates: boolean;
-}
+import { motion } from "framer-motion";
+import {
+  Check,
+  LayoutGrid,
+  FileText,
+  Truck,
+  CarFront,
+  FileQuestion,
+  Eye,
+} from "lucide-react";
+import { useState } from "react";
 
 export function CertificateSelectors({
   companies,
   selectedCompany,
   setSelectedCompany,
-  loadingCompanies,
   templates,
   selectedTemplate,
   setSelectedTemplate,
-  loadingTemplates,
-}: CertificateSelectorsProps) {
-  const handleCompanySelect = (company: Company) => {
-    if (loadingTemplates) return;
-    if (selectedCompany?.id === company.id) {
-      setSelectedCompany(null);
-      setSelectedTemplate(null);
-    } else {
-      setSelectedCompany(company);
-      setSelectedTemplate(null);
-    }
-  };
+  onViewTemplate, // Prop añadida para abrir el modal
+}: any) {
+  const [activeFilter, setActiveFilter] = useState("carroceria");
+
+  const filters = [
+    { id: "carroceria", label: "Carrocería", icon: Truck },
+    { id: "carga", label: "Carga", icon: CarFront },
+    { id: "otros", label: "Otros", icon: FileQuestion },
+  ];
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 p-1 min-h-[500px]">
-      {/* COLUMNA IZQUIERDA: EMPRESAS */}
-      <div className="w-full lg:w-64 space-y-4 shrink-0">
-        <div className="flex items-center gap-2 px-2">
-          <div className="p-1.5 bg-slate-900 dark:bg-slate-100 rounded-lg">
-            <Building2 className="w-4 h-4 text-white dark:text-slate-900" />
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+      {/* SECCIÓN IZQUIERDA: LISTA DE EMPRESAS FIJA */}
+      <div className="lg:col-span-4 space-y-6">
+        <div>
+          <h3 className="text-[10px] font-black text-[#a3aed0] uppercase tracking-[0.2em] mb-4 ml-1">
+            1. Selecciona Emisor
+          </h3>
+          <div className="h-[420px] overflow-y-auto pr-2 custom-scrollbar border-r border-[#e9edf7] space-y-2">
+            {companies.map((c: any) => {
+              const isSelected = selectedCompany?.id === c.id;
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => {
+                    setSelectedCompany(c);
+                    setSelectedTemplate(null);
+                  }}
+                  className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all group ${
+                    isSelected
+                      ? "bg-white border-[#4318ff] shadow-sm"
+                      : "bg-[#f4f7fe] border-transparent hover:border-[#e9edf7]"
+                  }`}
+                >
+                  <div className="w-10 h-10 rounded-full bg-white p-1.5 shadow-sm border border-[#e9edf7]">
+                    <img
+                      src={c.logo_url}
+                      className="w-full h-full object-contain"
+                      alt=""
+                    />
+                  </div>
+                  <span
+                    className={`text-sm font-bold ${
+                      isSelected
+                        ? "text-[#1b2559]"
+                        : "text-[#a3aed0] group-hover:text-[#1b2559]"
+                    }`}
+                  >
+                    {c.name}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-          <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
-            Empresa
-          </span>
-        </div>
-
-        <div className="flex flex-col gap-2 max-h-[420px] overflow-y-auto pr-2 custom-scrollbar">
-          {companies.map((c) => {
-            const isSelected = selectedCompany?.id === c.id;
-            return (
-              <button
-                key={c.id}
-                onClick={() => handleCompanySelect(c)}
-                className={`cursor-pointer flex items-center gap-3 px-3 py-3 rounded-xl border-2 transition-all duration-300 ${
-                  isSelected
-                    ? "bg-slate-900 border-slate-900 text-white shadow-md translate-x-1"
-                    : "bg-white border-slate-100 text-slate-600 hover:border-blue-200"
-                }`}
-              >
-                <div className="w-8 h-8 rounded-lg overflow-hidden bg-white flex items-center justify-center shrink-0 border border-slate-100">
-                  {c.logo_url ? (
-                    <img src={c.logo_url} className="w-full h-full object-contain p-1" alt={c.name} />
-                  ) : (
-                    <Building2 className="w-4 h-4 text-slate-300" />
-                  )}
-                </div>
-                <span className="text-xs font-bold truncate flex-1 text-left">
-                  {c.name}
-                </span>
-                {isSelected && <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />}
-              </button>
-            );
-          })}
         </div>
       </div>
 
-      {/* COLUMNA DERECHA: PLANTILLAS */}
-      <div className="flex-1 space-y-4 relative bg-slate-50/50 dark:bg-slate-900/30 rounded-[2rem] p-6 border border-slate-100 dark:border-slate-800">
-        <div className="flex items-center gap-2 px-1">
-          <div className="p-1.5 bg-blue-600 text-white rounded-lg">
-            <Layers3 className="w-4 h-4" />
+      {/* SECCIÓN DERECHA: FILTROS + PLANTILLAS */}
+      <div className="lg:col-span-8 space-y-8 animate-in fade-in slide-in-from-right-4">
+        <div
+          className={`transition-opacity duration-300 ${
+            !selectedCompany ? "opacity-30 pointer-events-none" : "opacity-100"
+          }`}
+        >
+          <h3 className="text-[10px] font-black text-[#a3aed0] uppercase tracking-[0.2em] mb-4 ml-1">
+            2. Tipo de Homologación
+          </h3>
+          <div className="flex flex-wrap gap-3">
+            {filters.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setActiveFilter(f.id)}
+                className={`flex items-center gap-2 px-6 py-3 rounded-2xl border-2 transition-all font-bold text-xs uppercase tracking-wider ${
+                  activeFilter === f.id
+                    ? "bg-white border-[#4318ff] text-[#4318ff] shadow-sm"
+                    : "bg-[#f4f7fe] border-transparent text-[#a3aed0] hover:text-[#1b2559]"
+                }`}
+              >
+                <f.icon className="w-4 h-4" />
+                {f.label}
+              </button>
+            ))}
           </div>
-          <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
-            Formatos
-          </span>
         </div>
 
-        <div className="relative min-h-[350px] w-full">
-          {loadingTemplates && (
-            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl">
-              <Sparkles className="w-6 h-6 text-blue-600 animate-pulse mb-2" />
-              <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Cargando...</p>
+        <div className="bg-[#f4f7fe] rounded-[32px] p-8 border border-[#e9edf7] min-h-[350px]">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <LayoutGrid className="w-5 h-5 text-[#4318ff]" />
+              <h3 className="text-lg font-bold text-[#1b2559]">
+                3. Elige la Plantilla
+              </h3>
             </div>
-          )}
+          </div>
 
-          {!selectedCompany && !loadingTemplates && (
-            <div className="h-full min-h-[350px] flex flex-col items-center justify-center text-center opacity-60">
-              <ArrowRightLeft className="w-8 h-8 text-slate-300 mb-3" />
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                Selecciona una empresa
+          {!selectedCompany ? (
+            <div className="h-[200px] flex flex-col items-center justify-center text-[#a3aed0] italic">
+              <p className="text-sm font-medium">
+                Selecciona una empresa a la izquierda primero
               </p>
             </div>
-          )}
-
-          {selectedCompany && !loadingTemplates && templates.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-2">
-              {templates.map((t) => {
-                const isSelected = selectedTemplate?.id === t.id;
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {templates.map((template: any) => {
+                const isSelected = selectedTemplate?.id === template.id;
                 return (
-                  <button
-                    key={t.id}
-                    onClick={() => setSelectedTemplate(t)}
-                    className={`group relative flex flex-col items-center justify-center text-center p-4 h-36 rounded-2xl border-2 transition-all duration-300 ${
+                  <div
+                    key={template.id}
+                    className={`relative h-[180px] bg-white p-5 rounded-[24px] border-2 transition-all flex flex-col ${
                       isSelected
-                        ? "bg-white dark:bg-slate-900 border-blue-500 shadow-lg scale-105 z-10"
-                        : "bg-white dark:bg-slate-950/20 border-slate-100 dark:border-slate-800 hover:border-blue-200"
+                        ? "border-[#4318ff] shadow-lg shadow-[#4318ff10]"
+                        : "border-white shadow-sm"
                     }`}
                   >
-                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-3 transition-colors ${
-                      isSelected ? "bg-blue-600 text-white" : "bg-slate-50 dark:bg-slate-800 text-slate-400"
-                    }`}>
-                      <FileText className="w-6 h-6" />
-                    </div>
-                    <p className={`text-xs font-bold leading-tight line-clamp-2 px-1 ${
-                      isSelected ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-400"
-                    }`}>
-                      {t.name}
-                    </p>
-                    {isSelected && (
-                      <div className="absolute top-2 right-2">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500 fill-white dark:fill-slate-900" />
+                    {/* BOTÓN VISTA PREVIA (MODAL) CORREGIDO */}
+                    <button
+                      className="absolute top-4 right-4 z-20 p-2 rounded-xl bg-[#f4f7fe] text-[#a3aed0] hover:text-[#4318ff] hover:bg-[#e9edf7] transition-all"
+                      title="Vista Previa"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Evita seleccionar la plantilla al verla
+                        setSelectedTemplate(template); // Setea la plantilla actual
+                        onViewTemplate(); // Abre el modal
+                      }}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      onClick={() => setSelectedTemplate(template)}
+                      className="flex-1 flex flex-col text-left h-full w-full"
+                    >
+                      <div
+                        className={`w-10 h-10 rounded-xl mb-4 flex items-center justify-center ${
+                          isSelected
+                            ? "bg-[#4318ff] text-white"
+                            : "bg-[#f4f7fe] text-[#2b579a]"
+                        }`}
+                      >
+                        <FileText className="w-6 h-6" />
                       </div>
-                    )}
-                  </button>
+
+                      <div className="space-y-1 pr-6">
+                        <p
+                          className={`text-[12px] font-black uppercase leading-tight line-clamp-2 ${
+                            isSelected ? "text-[#1b2559]" : "text-[#a3aed0]"
+                          }`}
+                        >
+                          {template.name}
+                        </p>
+                        <p className="text-[10px] text-[#4318ff] font-black mt-2">
+                          DOCX
+                        </p>
+                      </div>
+
+                      {isSelected && (
+                        <div className="mt-auto flex items-center gap-1 text-[10px] font-bold text-[#4318ff]">
+                          <Check className="w-3 h-3 stroke-[4px]" />{" "}
+                          SELECCIONADO
+                        </div>
+                      )}
+                    </button>
+                  </div>
                 );
               })}
             </div>

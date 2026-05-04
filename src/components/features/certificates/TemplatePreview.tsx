@@ -14,42 +14,6 @@ export function TemplatePreview({
 }: TemplatePreviewProps) {
   return (
     <div className="bg-[var(--card)] rounded-[32px] border border-[var(--border)] shadow-2xl dark:shadow-black/40 h-[calc(100vh-180px)] min-h-[650px] flex flex-col overflow-hidden animate-in slide-in-from-right-8 duration-700 ease-out transition-colors">
-      {/* Top bar */}
-      <div className="bg-slate-900 dark:bg-slate-950 px-8 py-5 flex items-center justify-between border-b border-slate-800">
-        <div className="flex items-center gap-4">
-          <div className="px-3 py-1 bg-accent rounded-md text-[10px] font-black text-white uppercase tracking-widest">
-            {pdfUrl ? "PDF Generado" : "Preview Mode"}
-          </div>
-          <p className="text-xs font-medium text-slate-400">
-            {pdfUrl ? "Resultado final" : "Certificado 1 de 24"}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {isProcessing ? (
-            <>
-              <Loader2 className="w-3 h-3 text-amber-400 animate-spin" />
-              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-tight">
-                Generando PDF...
-              </span>
-            </>
-          ) : pdfUrl ? (
-            <>
-              <div className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-tight">
-                PDF listo
-              </span>
-            </>
-          ) : (
-            <>
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-tight">
-                Cruce de datos exitoso
-              </span>
-            </>
-          )}
-        </div>
-      </div>
-
       {/* Document area */}
       <div className="flex-1 bg-slate-200/50 dark:bg-black/35 p-4 md:p-8 overflow-hidden flex justify-center">
         <div className="bg-white shadow-2xl w-full max-w-[900px] h-full rounded-xl border border-slate-100 overflow-hidden relative">

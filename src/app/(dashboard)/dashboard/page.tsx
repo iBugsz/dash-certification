@@ -8,6 +8,8 @@ import { ActivityFeed } from "@/components/features/dashboard/ActivityFeed";
 import { AdobeQuotaCard } from "@/components/features/dashboard/AdobeQuotaCard";
 import { StatsOverviewCard } from "@/components/features/dashboard/StatsOverviewCard";
 import { CalendarWidget } from "@/components/features/dashboard/CalendarWidget";
+// Importamos el nuevo componente del asistente
+import { GeminiAssistantCard } from "@/components/features/dashboard/GeminiAssistantCard";
 
 export default function DashboardPage() {
   const d = useDashboardData();
@@ -29,7 +31,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* LADO IZQUIERDO (8 COLUMNAS) - FLUJO TÉCNICO */}
         <div className="xl:col-span-8 space-y-6">
-          {/* 1. Almacenamiento (Arriba) */}
+          {/* 1. Almacenamiento */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <StorageCard
               label="Uso de Base de Datos"
@@ -49,7 +51,7 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* 2. Gráfica de Rendimiento (Debajo de almacenamiento) */}
+          {/* 2. Gráfica de Rendimiento */}
           <div className="bg-white dark:bg-[#111113] border-[length:var(--border-width)] border-[var(--border)] rounded-2xl p-8 shadow-sm card-premium">
             <h3 className="text-[11px] font-bold uppercase mb-8 tracking-[0.2em]">
               Rendimiento de Generación
@@ -59,7 +61,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* 3. Actividad Reciente (Debajo de la gráfica) */}
+          {/* 3. Actividad Reciente */}
           <div className="bg-white dark:bg-[#111113] border-[length:var(--border-width)] border-[var(--border)] rounded-2xl p-8 shadow-sm card-premium">
             <h3 className="text-[11px] font-bold uppercase text-[var(--sidebar-fg-muted)] mb-6 tracking-widest">
               Actividad Reciente
@@ -68,19 +70,22 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* LADO DERECHO (4 COLUMNAS) - FLUJO ADMINISTRATIVO */}
+        {/* LADO DERECHO (4 COLUMNAS) - FLUJO ADMINISTRATIVO Y AI */}
         <div className="xl:col-span-4 space-y-6">
-          {/* 1. Calendario (Arriba a la derecha) */}
+          {/* 1. Calendario */}
           <CalendarWidget />
 
-          {/* 2. Resumen de Activos (Debajo del calendario) */}
+          {/* 2. Asistente Gemini (Nuevo) */}
+          <GeminiAssistantCard />
+
+          {/* 3. Resumen de Activos */}
           <StatsOverviewCard
             companies={d.companies}
             templates={d.templates}
             generations={d.generationTotal}
           />
 
-          {/* 3. Adobe Quota (Al final de la derecha) */}
+          {/* 4. Adobe Quota */}
           <div className="stats-card-minimal text-center">
             <AdobeQuotaCard used={d.adobeUsed} limit={d.adobeLimit} />
           </div>
