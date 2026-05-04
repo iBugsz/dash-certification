@@ -42,8 +42,20 @@ export function ExcelDropzone({
         setIsDragActive(false);
         if (e.dataTransfer.files?.[0]) handleFile(e.dataTransfer.files[0]);
       }}
-      className={`relative p-8 rounded-[28px] border-2 border-dashed transition-all min-h-[220px] flex flex-col items-center justify-center text-center
-        ${currentFile ? "border-emerald-800 bg-emerald-950/25" : isDragActive ? "border-accent bg-accent/5 scale-[1.02]" : "bg-[var(--card)] border-[var(--border)]"}`}
+      className="relative p-8 rounded-[28px] border-2 border-dashed transition-all min-h-[220px] flex flex-col items-center justify-center text-center"
+      style={{
+        backgroundColor: currentFile
+          ? "rgba(5, 205, 153, 0.1)"
+          : isDragActive
+            ? "rgba(67, 24, 255, 0.05)"
+            : "var(--card)",
+        borderColor: currentFile
+          ? "#05cd99"
+          : isDragActive
+            ? "var(--accent)"
+            : "var(--border)",
+        transform: isDragActive ? "scale(1.02)" : "scale(1)",
+      }}
     >
       {!currentFile ? (
         <>
@@ -56,13 +68,22 @@ export function ExcelDropzone({
               e.target.files?.[0] && handleFile(e.target.files[0])
             }
           />
-          <div className="w-14 h-14 bg-slate-800/80 rounded-2xl flex items-center justify-center mb-4">
-            <Upload className="w-7 h-7 text-slate-500" />
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+            style={{ backgroundColor: "rgba(67, 24, 255, 0.15)" }}
+          >
+            <Upload className="w-7 h-7" style={{ color: "var(--accent)" }} />
           </div>
-          <h3 className="text-base font-bold text-slate-200">
+          <h3
+            className="text-base font-bold"
+            style={{ color: "var(--foreground)" }}
+          >
             Subir Documento o Base de Datos
           </h3>
-          <p className="text-xs text-slate-500 mt-2">
+          <p
+            className="text-xs mt-2"
+            style={{ color: "var(--sidebar-fg-muted)" }}
+          >
             Arrastra tu archivo .xlsx, .docx o haz clic
           </p>
         </>
@@ -75,12 +96,16 @@ export function ExcelDropzone({
             <FileSpreadsheet className="w-10 h-10 text-emerald-500 mb-2" />
           )}
 
-          <p className="text-sm font-bold text-slate-100 truncate max-w-[200px]">
+          <p
+            className="text-sm font-bold truncate max-w-[200px]"
+            style={{ color: "var(--foreground)" }}
+          >
             {currentFile.name}
           </p>
           <button
             onClick={() => onFileSelect(null)}
-            className="mt-4 text-[10px] font-black text-red-400 uppercase flex items-center gap-1"
+            className="mt-4 text-[10px] font-black uppercase flex items-center gap-1"
+            style={{ color: "var(--accent)" }}
           >
             <X className="w-3 h-3" /> Eliminar
           </button>

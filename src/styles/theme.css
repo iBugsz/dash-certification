@@ -1,18 +1,44 @@
 :root {
-  /* --- MODO CLARO (Yann UI/UX) --- */
-  --background: #fdfdfd5e;
+  /* --- MODO CLARO (Yann UI/UX + Shadcn) --- */
+  --background: #f4f7fe;
   --foreground: #1b2559;
+
   --card: #ffffff;
-  --border: #e9edf7;
-  --navbar-glass: rgba(255, 255, 255, 0.85);
+  --card-foreground: #1b2559;
+
+  --popover: #ffffff;
+  --popover-foreground: #1b2559;
+
+  /* Acento Morado Principal */
+  --accent: #360092;
+  --accent-foreground: #ffffff;
+  --accent-dark: #6d28d9;
+  --accent-hover: #8b5cf6;
+  --accent-soft: rgba(124, 58, 237, 0.08);
+  --accent-ring: rgba(124, 58, 237, 0.2);
+
+  --primary: #1b2559;
+  --primary-foreground: #ffffff;
+
+  --secondary: #f4f7fe;
+  --secondary-foreground: #1b2559;
+
+  --muted: #f4f7fe;
+  --muted-foreground: #a3aed0;
+
+  --destructive: #ff3333;
+  --destructive-foreground: #ffffff;
+
+  /* Bordes e Inputs */
+  --border: #dce3f1;
+  --input: #dce3f1;
   --input-bg: #f4f7fe;
   --input-bg-focus: #ffffff;
+  --ring: #360092;
+  --radius: 0.625rem;
 
-  --accent: #4318ff;
-  --accent-dark: #2b08d4;
-  --accent-hover: #3a10e5;
-  --accent-soft: rgba(67, 24, 255, 0.08);
-  --accent-ring: rgba(67, 24, 255, 0.2);
+  /* Navbar */
+  --navbar-glass: rgba(255, 255, 255, 0.85);
 
   /* Sidebar Light */
   --sidebar-bg: #ffffff;
@@ -28,51 +54,60 @@
   --sidebar-shadow: 14px 17px 40px 4px rgba(112, 144, 176, 0.08);
   --sidebar-user-name: #1b2559;
   --sidebar-user-role: #a3aed0;
-
-  /* Hover del botón de usuario */
   --sidebar-user-hover: #ebebf0;
 
-  --background: #f4f7fe; /* Un poco más de color al fondo para que resalte el blanco */
-  --card: #ffffff;
-
-  /* BORDES: Más oscuro para mejor contraste */
-  --border: #dce3f1;
-
-  /* Botones con mejor contraste */
+  /* Botones extra */
   --button-bg: #f4f7fe;
   --button-text: #1b2559;
   --button-hover: #e8eef9;
 }
 
 .dark {
-  /* --- MODO OSCURO (Sólido y sin líneas blancas) --- */
-  --background: #171717; /* Negro fondo principal */
-  --foreground: #f4f7fe; /* Texto claro */
-  --card: #212121; /* Negro grisáceo para tarjetas */
+  /* --- MODO OSCURO (Sólido Premium) --- */
+  --background: #171717;
+  --foreground: #f4f7fe;
 
-  /* BORDES: Cambiados de blanco a un gris muy sutil que casi no se vea */
-  --border: rgba(255, 255, 255, 0.05);
+  --card: #212121;
+  --card-foreground: #f4f7fe;
 
-  /* NAVBAR & INPUTS: Arreglado para que no salgan botones blancos */
-  --navbar-glass: rgba(23, 23, 23, 0.8);
-  --input-bg: #2a2a2a;
-  --input-bg-focus: #333333;
+  --popover: #212121;
+  --popover-foreground: #f4f7fe;
 
-  /* ACCENT: En modo oscuro el acento debe ser sutil o blanco puro */
-  --accent: #4318ff;
+  --accent: #4318ff; /* Morado eléctrico para destacar en negro */
+  --accent-foreground: #ffffff;
   --accent-hover: #3a10e5;
 
-  /* SIDEBAR DARK: Eliminando líneas y ajustando selección */
+  --primary: #f4f7fe;
+  --primary-foreground: #171717;
+
+  --secondary: #2a2a2a;
+  --secondary-foreground: #f4f7fe;
+
+  --muted: #2a2a2a;
+  --muted-foreground: #708090;
+
+  --destructive: #701a1a;
+  --destructive-foreground: #f4f7fe;
+
+  /* Bordes e Inputs Dark */
+  --border: rgba(255, 255, 255, 0.05);
+  --input: rgba(255, 255, 255, 0.1);
+  --input-bg: #2a2a2a;
+  --input-bg-focus: #333333;
+  --ring: #4318ff;
+
+  /* Navbar Dark */
+  --navbar-glass: rgba(23, 23, 23, 0.8);
+
+  /* Sidebar Dark */
   --sidebar-bg: #171717;
-  --sidebar-border: rgba(255, 255, 255, 0.03); /* Casi invisible */
+  --sidebar-border: rgba(255, 255, 255, 0.03);
   --sidebar-fg: rgba(255, 255, 255, 0.5);
   --sidebar-fg-hover: #ffffff;
-  --sidebar-active-bg: #000000; /* Fondo negro puro para el item activo */
+  --sidebar-active-bg: #000000;
   --sidebar-active-fg: #ffffff;
   --sidebar-active-icon: #ffffff;
   --sidebar-divider: rgba(255, 255, 255, 0.03);
-
-  /* USER MENU HOVER */
-  --sidebar-user-hover: #000000; /* Negro para el hover del usuario */
+  --sidebar-user-hover: #000000;
   --sidebar-user-name: rgba(255, 255, 255, 0.9);
 }

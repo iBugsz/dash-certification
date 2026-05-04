@@ -3,15 +3,31 @@ import { Zap, ShieldCheck } from "lucide-react";
 export function FeatureTips() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
-      <div className="group p-5 bg-gradient-to-br from-blue-50/50 to-white dark:from-blue-950/20 dark:to-[var(--card)] rounded-[24px] border border-blue-100/50 dark:border-blue-900/30 flex gap-4 transition-all hover:shadow-md hover:border-blue-200">
-        <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-          <Zap className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+      <div
+        className="group p-5 rounded-[24px] border flex gap-4 transition-all hover:shadow-md"
+        style={{
+          background:
+            "linear-gradient(to right, rgba(67, 24, 255, 0.05), var(--card))",
+          borderColor: "rgba(67, 24, 255, 0.2)",
+        }}
+      >
+        <div
+          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"
+          style={{ backgroundColor: "rgba(67, 24, 255, 0.1)" }}
+        >
+          <Zap className="w-5 h-5" style={{ color: "var(--accent)" }} />
         </div>
         <div>
-          <p className="text-sm font-bold text-blue-900 dark:text-blue-200">
+          <p
+            className="text-sm font-bold"
+            style={{ color: "var(--foreground)" }}
+          >
             Mapeo Inteligente
           </p>
-          <p className="text-[11px] text-blue-700/70 dark:text-blue-300/60 leading-relaxed mt-1">
+          <p
+            className="text-[11px] leading-relaxed mt-1"
+            style={{ color: "var(--sidebar-fg-muted)" }}
+          >
             Detectamos automáticamente etiquetas como{" "}
             <strong>placa, chasis y marca</strong> dentro de tu archivo Excel
             sin configurar nada.
@@ -19,15 +35,31 @@ export function FeatureTips() {
         </div>
       </div>
 
-      <div className="group p-5 bg-gradient-to-br from-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-[var(--card)] rounded-[24px] border border-emerald-100/50 dark:border-emerald-900/30 flex gap-4 transition-all hover:shadow-md hover:border-emerald-200">
-        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-          <ShieldCheck className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
+      <div
+        className="group p-5 rounded-[24px] border flex gap-4 transition-all hover:shadow-md"
+        style={{
+          background:
+            "linear-gradient(to right, rgba(5, 205, 153, 0.05), var(--card))",
+          borderColor: "rgba(5, 205, 153, 0.2)",
+        }}
+      >
+        <div
+          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"
+          style={{ backgroundColor: "rgba(5, 205, 153, 0.1)" }}
+        >
+          <ShieldCheck className="w-5 h-5" style={{ color: "#05cd99" }} />
         </div>
         <div>
-          <p className="text-sm font-bold text-emerald-900 dark:text-emerald-200">
+          <p
+            className="text-sm font-bold"
+            style={{ color: "var(--foreground)" }}
+          >
             Seguridad Total
           </p>
-          <p className="text-[11px] text-emerald-700/70 dark:text-emerald-300/60 leading-relaxed mt-1">
+          <p
+            className="text-[11px] leading-relaxed mt-1"
+            style={{ color: "var(--sidebar-fg-muted)" }}
+          >
             Procesamiento local seguro. Tus datos sensibles{" "}
             <strong>no se almacenan</strong> permanentemente en nuestros
             servidores.

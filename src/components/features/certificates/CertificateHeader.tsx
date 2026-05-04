@@ -31,14 +31,18 @@ export function CertificateHeader({
   onDownload,
 }: CertificateHeaderProps) {
   return (
-    <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
+    <header
+      className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6"
+      style={{ borderBottomColor: "var(--border)", borderBottomWidth: "1px" }}
+    >
       {isReady && (
         <div className="flex gap-3 animate-in fade-in zoom-in duration-500">
           {!isMapped && !pdfUrl && (
             <button
               onClick={onAnalyze}
               disabled={isProcessing || hasMissingImages}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg transition-all active:scale-95 disabled:opacity-60"
+              className="flex items-center gap-2 px-6 py-3 text-white rounded-xl font-bold shadow-lg transition-all active:scale-95 disabled:opacity-60"
+              style={{ backgroundColor: "var(--accent)" }}
             >
               {isProcessing ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -55,7 +59,8 @@ export function CertificateHeader({
             <button
               onClick={onGenerate}
               disabled={isProcessing}
-              className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-lg transition-all active:scale-95"
+              className="flex items-center gap-2 px-6 py-3 text-white rounded-xl font-bold shadow-lg transition-all active:scale-95"
+              style={{ backgroundColor: "#05cd99" }}
             >
               {isProcessing ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -70,13 +75,18 @@ export function CertificateHeader({
             <div className="flex gap-2">
               <button
                 onClick={() => window.location.reload()}
-                className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-200 transition-all"
+                className="p-3 rounded-xl transition-all"
+                style={{
+                  backgroundColor: "var(--input-bg)",
+                  color: "var(--foreground)",
+                }}
               >
                 <RefreshCw className="w-5 h-5" />
               </button>
               <button
                 onClick={onDownload}
-                className="flex items-center gap-2 px-6 py-3 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl font-bold shadow-xl transition-all active:scale-95"
+                className="flex items-center gap-2 px-6 py-3 text-white rounded-xl font-bold shadow-xl transition-all active:scale-95"
+                style={{ backgroundColor: "var(--foreground)" }}
               >
                 <Download className="w-5 h-5" />
                 Descargar Certificado

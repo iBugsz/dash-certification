@@ -9,8 +9,18 @@ export function CompanyBadge({ company }: { company: Company }) {
   const [imgError, setImgError] = useState(false);
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-accent/5 border border-accent/20 rounded-2xl animate-in fade-in zoom-in duration-300">
-      <div className="w-10 h-10 rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--card)] flex items-center justify-center shrink-0">
+    <div
+      className="flex items-center gap-3 p-3 rounded-2xl animate-in fade-in zoom-in duration-300"
+      style={{
+        backgroundColor: "rgba(67, 24, 255, 0.05)",
+        borderColor: "rgba(67, 24, 255, 0.2)",
+        borderWidth: "1px",
+      }}
+    >
+      <div
+        className="w-10 h-10 rounded-xl overflow-hidden border flex items-center justify-center shrink-0"
+        style={{ borderColor: "var(--border)", backgroundColor: "var(--card)" }}
+      >
         {company.logo_url && !imgError ? (
           <img
             src={company.logo_url}
@@ -19,15 +29,24 @@ export function CompanyBadge({ company }: { company: Company }) {
             onError={() => setImgError(true)}
           />
         ) : (
-          <Building2 className="w-5 h-5 text-slate-400" />
+          <Building2
+            className="w-5 h-5"
+            style={{ color: "var(--sidebar-fg-muted)" }}
+          />
         )}
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-black text-accent uppercase tracking-widest truncate">
+        <p
+          className="text-xs font-black uppercase tracking-widest truncate"
+          style={{ color: "var(--accent)" }}
+        >
           {company.name}
         </p>
         {company.nit && (
-          <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+          <p
+            className="text-[10px] mt-0.5"
+            style={{ color: "var(--sidebar-fg-muted)" }}
+          >
             NIT: {company.nit}
           </p>
         )}

@@ -9,10 +9,20 @@ export function PreviewButton({ onClick, isMapped }: Props) {
   return (
     <button
       onClick={onClick}
-      className="group relative flex items-center justify-center bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full font-bold text-xs transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] hover:px-6 px-4 py-3 shadow-[0_0_20px_rgba(59,130,246,0.5)] hover:shadow-blue-500/50 overflow-hidden"
+      className="group relative flex items-center justify-center text-white rounded-full font-bold text-xs transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] hover:px-6 px-4 py-3 overflow-hidden"
       style={{
         animation:
           "super-slide 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
+        backgroundColor: "var(--accent)",
+        boxShadow: "0 0 20px rgba(67, 24, 255, 0.5)",
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.boxShadow =
+          "0 0 30px rgba(67, 24, 255, 0.7)";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.boxShadow =
+          "0 0 20px rgba(67, 24, 255, 0.5)";
       }}
     >
       {/* 1. ANIMACIÓN DE BRILLO TIPO RAYO */}
@@ -32,9 +42,9 @@ export function PreviewButton({ onClick, isMapped }: Props) {
             100% { transform: translateX(150%) skewX(-25deg); }
           }
           @keyframes pulse-ring {
-            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(67, 24, 255, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(67, 24, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(67, 24, 255, 0); }
           }
         `,
         }}

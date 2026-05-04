@@ -39,14 +39,29 @@ export function ImageUploadSection({
     <div className="space-y-3 animate-in fade-in slide-in-from-top-4 duration-500">
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-blue-500 rounded-lg shadow-sm shadow-blue-200 dark:shadow-none">
+          <div
+            className="p-1.5 rounded-lg shadow-sm"
+            style={{
+              backgroundColor: "var(--accent)",
+              boxShadow: "0 1px 3px 0 rgba(67, 24, 255, 0.2)",
+            }}
+          >
             <Camera className="w-3.5 h-3.5 text-white" />
           </div>
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+          <h3
+            className="text-[10px] font-black uppercase tracking-widest"
+            style={{ color: "var(--sidebar-fg-muted)" }}
+          >
             Multimedia Requerida
           </h3>
         </div>
-        <span className="text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full">
+        <span
+          className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+          style={{
+            backgroundColor: "rgba(67, 24, 255, 0.1)",
+            color: "var(--accent)",
+          }}
+        >
           {Object.keys(imageFiles).length} / {imageTags.length}
         </span>
       </div>
@@ -59,14 +74,20 @@ export function ImageUploadSection({
           return (
             <div
               key={tag}
-              className={`relative group flex items-center p-2 rounded-2xl border transition-all duration-300 ${
-                hasFile
-                  ? "bg-white dark:bg-slate-900 border-emerald-500/30 shadow-sm shadow-emerald-100 dark:shadow-none"
-                  : "bg-slate-50/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 hover:border-blue-400"
-              }`}
+              className="relative group flex items-center p-2 rounded-2xl border transition-all duration-300"
+              style={{
+                backgroundColor: hasFile ? "var(--card)" : "var(--input-bg)",
+                borderColor: hasFile
+                  ? "rgba(5, 205, 153, 0.3)"
+                  : "var(--border)",
+                boxShadow: hasFile ? "0 1px 3px 0 rgba(0, 0, 0, 0.1)" : "none",
+              }}
             >
               {/* Miniatura de la Imagen */}
-              <div className="relative w-14 h-14 shrink-0 rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-800">
+              <div
+                className="relative w-14 h-14 shrink-0 rounded-xl overflow-hidden"
+                style={{ backgroundColor: "var(--input-bg)" }}
+              >
                 {hasFile && previewUrl ? (
                   <img
                     src={previewUrl}
@@ -75,7 +96,10 @@ export function ImageUploadSection({
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <ImageIcon className="w-5 h-5 text-slate-400 dark:text-slate-600" />
+                    <ImageIcon
+                      className="w-5 h-5"
+                      style={{ color: "var(--sidebar-fg-muted)" }}
+                    />
                   </div>
                 )}
 
@@ -87,22 +111,26 @@ export function ImageUploadSection({
 
               {/* Textos al lado de la imagen */}
               <div className="ml-3 flex-1 min-w-0">
-                <p className="text-[9px] font-black text-blue-500 uppercase tracking-tighter mb-0.5">
+                <p
+                  className="text-[9px] font-black uppercase tracking-tighter mb-0.5"
+                  style={{ color: "var(--accent)" }}
+                >
                   {tag}
                 </p>
                 <p
-                  className={`text-xs font-extrabold truncate ${
-                    hasFile
-                      ? "text-slate-800 dark:text-slate-100"
-                      : "text-slate-500 dark:text-slate-400"
-                  }`}
+                  className="text-xs font-extrabold truncate"
+                  style={{
+                    color: hasFile
+                      ? "var(--foreground)"
+                      : "var(--sidebar-fg-muted)",
+                  }}
                 >
                   {label}
                 </p>
                 {hasFile && (
                   <div className="flex items-center gap-1 mt-1">
                     <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                    <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                    <span className="text-[9px] font-bold text-emerald-600">
                       LISTO
                     </span>
                   </div>

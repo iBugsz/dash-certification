@@ -1,14 +1,8 @@
-import { X } from "lucide-react";
-import { TemplatePreview } from "./TemplatePreview";
+"use client";
 
-interface Props {
-  isOpen: boolean;
-  onClose: () => void;
-  selectedTemplate: any;
-  pdfUrl: string | null;
-  isProcessing: boolean;
-  isMapped: boolean;
-}
+import { useEffect } from "react";
+import { X, LayoutPanelLeft } from "lucide-react";
+import { TemplatePreview } from "./TemplatePreview";
 
 export function PreviewDrawer({
   isOpen,
@@ -16,51 +10,96 @@ export function PreviewDrawer({
   selectedTemplate,
   pdfUrl,
   isProcessing,
-  isMapped,
-}: Props) {
+}: any) {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
   return (
     <>
+      {/* OVERLAY: Fondo semi-transparente sin desenfoque (blur) para limpieza total */}
       <div
-        className={`fixed inset-y-0 right-0 w-full md:w-[700px] bg-white dark:bg-slate-950 shadow-[-30px_0_60px_rgba(0,0,0,0.2)] z-50 transform transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] border-l border-slate-200 dark:border-slate-800 ${
+        className={`fixed inset-0 w-screen h-screen z-[100] transition-opacity duration-300 ${
+          isOpen ? "opacity-100 visible" : "opacity-0 invisible"
+        }`}
+        onClick={onClose}
+        style={{ backgroundColor: "rgba(0, 0, 0, 0.3)" }} // Fondo más suave
+      />
+
+      {/* MODAL: Se eliminó la sombra pesada shadow-[-25px_...] */}
+      <div
+        className={`fixed inset-y-0 right-0 h-full w-full md:w-[650px] lg:w-[700px] z-[110] transform transition-transform duration-500 ease-[cubic-bezier(0.2,1,0.3,1)] border-l ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
+        style={{
+          backgroundColor: "var(--card)",
+          borderColor: "var(--border)", // Usamos borde en lugar de sombra difuminada
+        }}
       >
-        <div className="h-full flex flex-col relative">
-          <button
-            onClick={onClose}
-            className="absolute top-6 right-6 p-3 bg-slate-100 dark:bg-slate-800 hover:bg-red-500 hover:text-white rounded-2xl transition-all z-10"
+        <div className="h-full flex flex-col">
+          {/* Header Superior */}
+          <div
+            className="flex items-center justify-between px-6 py-4"
+            style={{
+              borderBottomColor: "var(--border)",
+              borderBottomWidth: "1px",
+              backgroundColor: "var(--card)",
+            }}
           >
-            <X className="w-6 h-6" />
-          </button>
+            <div className="flex items-center gap-3">
+              <div
+                className="h-9 w-9 flex items-center justify-center rounded-xl"
+                style={{
+                  backgroundColor: "var(--accent)",
+                }}
+              >
+                <LayoutPanelLeft className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex flex-col">
+                <h2
+                  className="text-[13px] font-black uppercase tracking-tight truncate max-w-[300px]"
+                  style={{ color: "var(--foreground)" }}
+                >
+                  {selectedTemplate?.name}
+                </h2>
+                <p
+                  className="text-[9px] font-bold uppercase tracking-widest leading-none"
+                  style={{ color: "var(--sidebar-fg-muted)" }}
+                >
+                  Vista Previa • AutoCert Pro
+                </p>
+              </div>
+            </div>
 
-          <div className="p-10 pb-6">
-            <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">
-              Inspección de Documento
-            </span>
-            <h2 className="text-3xl font-black text-slate-800 dark:text-slate-100 mt-2">
-              {isMapped ? "Datos Mapeados" : "Pre-visualización"}
-            </h2>
-            <div className="h-1 w-20 bg-blue-600 mt-4 rounded-full" />
+            <button
+              onClick={onClose}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 text-white"
+              style={{ backgroundColor: "var(--accent)" }}
+            >
+              Cerrar <X className="w-4 h-4" />
+            </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 pt-0 bg-transparent">
-            <div className="rounded-[2.5rem] overflow-hidden border border-slate-100 dark:border-slate-800 shadow-2xl h-[85%] bg-slate-50 dark:bg-slate-900">
-              <TemplatePreview
-                template={selectedTemplate}
-                pdfUrl={pdfUrl}
-                isProcessing={isProcessing}
-              />
-            </div>
+          {/* Área del Visor */}
+          <div
+            className="flex-1 overflow-hidden"
+            style={{ backgroundColor: "var(--input-bg)" }}
+          >
+            <TemplatePreview
+              template={selectedTemplate}
+              pdfUrl={pdfUrl}
+              isProcessing={isProcessing}
+            />
           </div>
         </div>
       </div>
-
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-40 transition-opacity duration-700"
-          onClick={onClose}
-        />
-      )}
     </>
   );
 }
