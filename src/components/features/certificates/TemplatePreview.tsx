@@ -1,7 +1,7 @@
 "use client";
 
 import { FileText, Loader2 } from "lucide-react";
-import { Viewer, Worker, LocalizationContext } from "@react-pdf-viewer/core";
+import { Viewer, Worker } from "@react-pdf-viewer/core";
 import "@react-pdf-viewer/core/lib/styles/index.css";
 
 export function TemplatePreview({ template, pdfUrl, isProcessing }: any) {
@@ -28,21 +28,17 @@ export function TemplatePreview({ template, pdfUrl, isProcessing }: any) {
       )}
 
       {currentFile ? (
-        <LocalizationContext.Provider
-          value={{ l10n: { core: { of: "de", page: "Página" } } }}
-        >
-          <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
-            <Viewer
-              fileUrl={currentFile}
-              theme={
-                typeof window !== "undefined" &&
-                document.documentElement.classList.contains("dark")
-                  ? "dark"
-                  : "light"
-              }
-            />
-          </Worker>
-        </LocalizationContext.Provider>
+        <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
+          <Viewer
+            fileUrl={currentFile}
+            theme={
+              typeof window !== "undefined" &&
+              document.documentElement.classList.contains("dark")
+                ? "dark"
+                : "light"
+            }
+          />
+        </Worker>
       ) : (
         <div className="flex flex-col items-center justify-center h-full opacity-30">
           <FileText

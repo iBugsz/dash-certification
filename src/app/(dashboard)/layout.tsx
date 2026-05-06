@@ -1,7 +1,23 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Sidebar from "@/components/ui/navigation/sidebar";
 import Navbar from "@/components/ui/navigation/navbar/Navbar";
+
+function NavbarWithFallback({
+  isCollapsed,
+  onMenuClick,
+}: {
+  isCollapsed: boolean;
+  onMenuClick: () => void;
+}) {
+  return (
+    <Suspense
+      fallback={<div className="h-16 bg-slate-100 dark:bg-slate-900" />}
+    >
+      <Navbar isCollapsed={isCollapsed} onMenuClick={onMenuClick} />
+    </Suspense>
+  );
+}
 
 export default function DashboardLayout({
   children,
@@ -23,7 +39,7 @@ export default function DashboardLayout({
 
       {/* Contenedor de contenido */}
       <div className="flex flex-col flex-1 min-w-0">
-        <Navbar
+        <NavbarWithFallback
           isCollapsed={isCollapsed}
           onMenuClick={() => setIsOpenMobile(true)}
         />

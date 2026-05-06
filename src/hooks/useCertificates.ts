@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import type { Company, Template } from "@/lib/certificates/types";
+import type { Company } from "@/lib/companies/types";
+import type { Template } from "@/lib/templates/types";
 import { extractExcelData } from "@/lib/excel";
 import * as Docxtemplater from "docxtemplater";
 import PizZip from "pizzip";

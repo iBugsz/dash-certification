@@ -49,14 +49,14 @@ export default function CompaniesPage() {
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center justify-center gap-2 px-6 py-3 bg-accent text-white rounded-xl font-semibold shadow-lg hover:bg-accent-dark transition-all cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
         >
-          <Plus className="w-5 h-5" />
+          <Plus size={18} />
           Nueva Empresa
         </button>
       </div>
 
-      {/* Grid con Lógica de Filtrado */}
+      {/* Contenido principal */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -64,17 +64,12 @@ export default function CompaniesPage() {
           ))}
         </div>
       ) : filteredCompanies.length === 0 ? (
-        /* Estado vacío: Diferenciamos entre "no hay nada" y "no se encontró lo buscado" */
-        <div className="flex flex-col items-center justify-center py-24 text-slate-400 dark:text-slate-600 text-center">
+        <div className="flex flex-col items-center justify-center py-16 text-center">
           {query ? (
             <>
               <SearchX size={56} className="mb-4 opacity-30" />
-              <p className="text-lg font-medium">
-                No se encontraron resultados
-              </p>
-              <p className="text-sm">
-                No hay empresas que coincidan con "{query}"
-              </p>
+              <p className="text-lg font-medium">No se encontraron empresas</p>
+              <p className="text-sm">Intenta con otros términos de búsqueda</p>
             </>
           ) : (
             <>
