@@ -17,6 +17,8 @@ interface Props {
   onDelete: (id: string, filePath: string) => void;
   onMappingClick: (template: Template) => void;
   onEditClick: (template: Template) => void;
+  // Nueva prop para manejar la vista previa en el modal
+  onPreviewClick: (url: string) => void;
 }
 
 export default function TemplateRow({
@@ -24,6 +26,7 @@ export default function TemplateRow({
   onDelete,
   onMappingClick,
   onEditClick,
+  onPreviewClick,
 }: Props) {
   return (
     <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors group">
@@ -32,11 +35,12 @@ export default function TemplateRow({
           <div className="p-2 bg-blue-50 dark:bg-blue-950/40 rounded-xl shrink-0 group-hover:bg-blue-100 dark:group-hover:bg-blue-950/60 transition-colors">
             <FileText className="w-4 h-4 text-blue-500 dark:text-blue-400" />
           </div>
+
+          {/* Al hacer clic aquí, ahora abre el modal en vez de una pestaña nueva */}
           <div
             className="cursor-pointer"
             onClick={() =>
-              template.has_preview &&
-              window.open(template.preview_url!, "_blank")
+              template.has_preview && onPreviewClick(template.preview_url!)
             }
           >
             <p className="font-medium text-slate-700 dark:text-slate-200 text-sm leading-tight hover:text-accent transition-colors">
@@ -71,17 +75,15 @@ export default function TemplateRow({
 
       <td className="px-6 py-4">
         <div className="flex justify-end gap-1">
-          {/* VISTA PREVIA */}
+          {/* BOTÓN DE VISTA PREVIA ACTUALIZADO A BUTTON */}
           {template.has_preview ? (
-            <a
-              href={template.preview_url!}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-xl transition-all"
+            <button
+              onClick={() => onPreviewClick(template.preview_url!)}
+              className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-xl transition-all cursor-pointer"
               title="Ver PDF"
             >
               <Eye className="w-4 h-4" />
-            </a>
+            </button>
           ) : (
             <div className="p-2 text-slate-300" title="Generando preview...">
               <Loader2 className="w-4 h-4 animate-spin" />

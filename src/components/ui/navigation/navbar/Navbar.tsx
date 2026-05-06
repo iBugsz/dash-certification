@@ -101,13 +101,16 @@ export default function Navbar({ onMenuClick, isCollapsed }: NavbarProps) {
 
         {/* Iconos */}
         <div className="flex items-center gap-1">
-          <button className="p-2 rounded-full hover:bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-fg-muted)]">
+          <button className="p-2 cursor-pointer rounded-full hover:bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-fg-muted)]">
             <Bell size={20} />
           </button>
-          <button className="p-2 rounded-full hover:bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-fg-muted)]">
+          <button className="p-2 cursor-pointer rounded-full hover:bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-fg-muted)]">
             <Grid3X3 size={20} />
           </button>
-          <button className="p-2 rounded-full hover:bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-fg-muted)]">
+          <button
+            onClick={() => router.push("/settings")}
+            className="p-2 cursor-pointer rounded-full hover:bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-fg-muted)]"
+          >
             <Settings size={20} />
           </button>
         </div>

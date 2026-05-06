@@ -7,6 +7,8 @@ import TemplateRow from "@/components/features/templates/TemplateRow";
 import TemplateRowSkeleton from "@/components/features/templates/TemplateRowSkeleton";
 import TemplateUploadModal from "@/components/features/templates/TemplateUploadModal";
 import MappingModal from "@/components/features/templates/MappingModal";
+// 1. Importamos el PreviewDrawer
+import { PreviewDrawer } from "@/components/features/certificates/PreviewDrawer";
 // Importamos los tipos necesarios para evitar el error de TS en el deploy
 import { Template, MappingField } from "@/lib/templates/types";
 
@@ -18,14 +20,22 @@ export default function TemplatesPage() {
     uploadTemplate,
     deleteTemplate,
     updateTemplateMapping,
-    // Asumo que tienes una función para actualizar el nombre en tu hook
-    // Si no la tienes, esta lógica de edición de nombre será solo visual por ahora
   } = useTemplates();
 
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedTemplateForMapping, setSelectedTemplateForMapping] =
     useState<Template | null>(null);
+
+  // --- ESTADOS PARA VISTA PREVIA ---
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [selectedPdfUrl, setSelectedPdfUrl] = useState<string | null>(null);
+
+  const handleOpenPreview = (url: string) => {
+    setSelectedPdfUrl(url);
+    setIsPreviewOpen(true);
+  };
+  // ---------------------------------
 
   // Estado para Edición
   const [templateToEdit, setTemplateToEdit] = useState<Template | null>(null);
@@ -60,17 +70,12 @@ export default function TemplatesPage() {
     const newName = formData.get("name") as string;
 
     if (templateToEdit && newName) {
-      // Aquí deberías llamar a la función de tu hook para persistir el cambio en Supabase
       console.log(
         "Actualizando plantilla:",
         templateToEdit.id,
         "a nombre:",
         newName,
       );
-
-      // Si tienes una función updateTemplate en useTemplates, úsala aquí:
-      // await updateTemplate(templateToEdit.id, { name: newName });
-
       setTemplateToEdit(null);
     }
   };
@@ -155,6 +160,7 @@ export default function TemplatesPage() {
                     }
                     onMappingClick={(t) => setSelectedTemplateForMapping(t)}
                     onEditClick={(t) => setTemplateToEdit(t)}
+                    onPreviewClick={handleOpenPreview} // <-- Pasamos la función al Row
                   />
                 ))
               )}
@@ -172,12 +178,11 @@ export default function TemplatesPage() {
         />
       )}
 
-      {/* MODAL: MAPEO - Aquí es donde se corregía el error de tipos */}
+      {/* MODAL: MAPEO */}
       {selectedTemplateForMapping && (
         <MappingModal
           template={selectedTemplateForMapping}
           onClose={() => setSelectedTemplateForMapping(null)}
-          // TypeScript ahora validará que updateTemplateMapping acepte el Record<string, MappingField>
           onSave={
             updateTemplateMapping as (
               id: string,
@@ -186,6 +191,15 @@ export default function TemplatesPage() {
           }
         />
       )}
+
+      {/* MODAL: VISTA PREVIA (DRAWER) */}
+      <PreviewDrawer
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        pdfUrl={selectedPdfUrl}
+        isProcessing={false}
+        isMapped={true}
+      />
 
       {/* MODAL: EDITAR INFORMACIÓN */}
       {templateToEdit && (
