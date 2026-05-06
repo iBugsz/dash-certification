@@ -13,7 +13,7 @@ export function useCompanies() {
     setLoading(true);
     const { data } = await supabase
       .from("companies")
-      .select("id, name, email, phone, logo_url, active, created_at")
+      .select("id, name, email, phone, logo_url, nit, active, created_at")
       .order("created_at", { ascending: false });
     setCompanies(data ?? []);
     setLoading(false);
@@ -26,7 +26,7 @@ export function useCompanies() {
   const saveCompany = async (
     form: CompanyFormData,
     editing: Company | null,
-    onDone: () => void
+    onDone: () => void,
   ) => {
     if (!form.name.trim()) return;
 

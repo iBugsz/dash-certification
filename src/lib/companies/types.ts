@@ -4,6 +4,7 @@ export interface Company {
   email: string | null;
   phone: string | null;
   logo_url: string | null;
+  nit: string | null;
   active: boolean;
   created_at: string;
 }
