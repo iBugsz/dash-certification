@@ -7,6 +7,11 @@ import { TemplateFormData, EMPTY_TEMPLATE_FORM } from "@/lib/templates/types";
 import type { Company } from "@/lib/companies/types";
 import { formatFileSize } from "@/lib/templates/utils";
 
+interface SimpleCompany {
+  id: string;
+  name: string;
+}
+
 interface Props {
   uploading: boolean;
   onClose: () => void;
@@ -24,7 +29,7 @@ export default function TemplateUploadModal({
 }: Props) {
   const [form, setForm] = useState<TemplateFormData>(EMPTY_TEMPLATE_FORM);
   const [file, setFile] = useState<File | null>(null);
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companies, setCompanies] = useState<SimpleCompany[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
