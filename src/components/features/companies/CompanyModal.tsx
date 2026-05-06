@@ -2,9 +2,9 @@
 
 import { useRef, useState } from "react";
 import { X, Upload, Link as LinkIcon } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
-import { Company, CompanyFormData, EMPTY_FORM } from "@/lib/companies/types";
-import { deleteOldLogo } from "@/lib/companies/utils";
+import { supabase } from "@/lib/supabase";
+import { Company, CompanyFormData, EMPTY_FORM } from "@/lib/types/database";
+import { deleteOldLogo } from "@/services/company-service";
 
 interface Props {
   editing: Company | null;

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { convertWordToPdf } from "@/lib/adobe/converter";
+import { convertWordToPdf } from "@/services/adobe/converter";
 import { createClient } from "@supabase/supabase-js";
 
 export const maxDuration = 60;
@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
 export async function POST(request: Request) {
@@ -16,7 +16,10 @@ export async function POST(request: Request) {
     const file = formData.get("file") as File | null;
 
     if (!file) {
-      return NextResponse.json({ error: "No se recibió el archivo" }, { status: 400 });
+      return NextResponse.json(
+        { error: "No se recibió el archivo" },
+        { status: 400 },
+      );
     }
 
     const wordBuffer = Buffer.from(await file.arrayBuffer());
@@ -25,7 +28,7 @@ export async function POST(request: Request) {
     console.log("⏳ Llamando a Adobe...");
     const pdfBuffer = await convertWordToPdf(wordBuffer);
 
-    // 2. Si llegamos aquí, Adobe NO falló. 
+    // 2. Si llegamos aquí, Adobe NO falló.
     // Ahora validamos que el buffer tenga contenido real.
     if (!pdfBuffer || pdfBuffer.length === 0) {
       throw new Error("Adobe devolvió un PDF vacío.");
@@ -34,9 +37,12 @@ export async function POST(request: Request) {
     // 3. SOLO SI LA CONVERSIÓN FUE EXITOSA, aumentamos el contador
     console.log("✅ Conversión exitosa, actualizando Supabase...");
     const { error: rpcError } = await supabase.rpc("increment_adobe_usage");
-    
+
     if (rpcError) {
-      console.warn("⚠️ El PDF se hizo pero no se pudo subir el contador:", rpcError);
+      console.warn(
+        "⚠️ El PDF se hizo pero no se pudo subir el contador:",
+        rpcError,
+      );
       // Opcional: No lanzamos error para que el usuario al menos reciba su PDF
     }
 
@@ -48,13 +54,15 @@ export async function POST(request: Request) {
         "Content-Disposition": `attachment; filename="certificado_${Date.now()}.pdf"`,
       },
     });
-
   } catch (error: any) {
     console.error("❌ Error crítico en convert-to-pdf:", error);
     // Si entra aquí, Supabase NUNCA se enteró, por lo tanto no sube el contador.
-    return NextResponse.json({ 
-      error: "Error en el servidor de PDF", 
-      details: error.message 
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Error en el servidor de PDF",
+        details: error.message,
+      },
+      { status: 500 },
+    );
   }
 }

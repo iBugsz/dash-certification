@@ -2,10 +2,10 @@
 
 import { useRef, useState, useEffect } from "react";
 import { X, Upload, FileText, Building2 } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
-import { TemplateFormData, EMPTY_TEMPLATE_FORM } from "@/lib/templates/types";
-import type { Company } from "@/lib/companies/types";
-import { formatFileSize } from "@/lib/templates/utils";
+import { supabase } from "@/lib/supabase";
+import { TemplateFormData, EMPTY_TEMPLATE_FORM } from "@/lib/types/database";
+import type { Company } from "@/lib/types/database";
+import { formatFileSize } from "@/lib/utils";
 
 interface SimpleCompany {
   id: string;

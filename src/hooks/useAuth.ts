@@ -1,6 +1,6 @@
 "use client";
 
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -51,11 +51,11 @@ export function useAuth() {
     }
   };
 
-  return { 
-    login, 
-    logout, 
+  return {
+    login,
+    logout,
     loading, // Compartimos el estado de carga
-    error,   // Compartimos los mensajes de error
-    setError 
+    error, // Compartimos los mensajes de error
+    setError,
   };
 }

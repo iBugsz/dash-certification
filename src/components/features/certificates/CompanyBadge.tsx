@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Building2 } from "lucide-react";
-import type { Company } from "@/lib/companies/types";
+import type { Company } from "@/lib/types/database";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 

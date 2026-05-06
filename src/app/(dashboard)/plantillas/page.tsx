@@ -10,7 +10,7 @@ import MappingModal from "@/components/features/templates/MappingModal";
 // 1. Importamos el PreviewDrawer
 import { PreviewDrawer } from "@/components/features/certificates/PreviewDrawer";
 // Importamos los tipos necesarios para evitar el error de TS en el deploy
-import { Template, MappingField } from "@/lib/templates/types";
+import { Template, MappingField } from "@/lib/types/database";
 
 export default function TemplatesPage() {
   const {

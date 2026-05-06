@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase";
 import { SidebarHeader } from "./sidebar-header";
 import { SidebarItem } from "./sidebar-item";
 import { SidebarFooter } from "./sidebar-footer";

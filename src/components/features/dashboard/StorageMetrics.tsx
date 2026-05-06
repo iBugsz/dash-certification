@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { StorageDonut } from "./StorageDonut";
-import { formatBytes } from "@/lib/dashboard/utils";
+import { formatBytes } from "@/lib/utils";
 
 interface StorageCardProps {
   label: string;

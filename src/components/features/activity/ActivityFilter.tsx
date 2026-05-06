@@ -1,7 +1,7 @@
 "use client";
 
 import { Filter, X } from "lucide-react";
-import { ActivityAction, ActivityEntity } from "@/lib/activity/types";
+import { ActivityAction, ActivityEntity } from "@/lib/types/activity";
 
 interface ActivityFilterProps {
   onFilterChange: (filters: {

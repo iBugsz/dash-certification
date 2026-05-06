@@ -1,28 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import type { Company } from "@/lib/companies/types";
-import type { Template } from "@/lib/templates/types";
-import { extractExcelData } from "@/lib/excel";
-import * as Docxtemplater from "docxtemplater";
-import PizZip from "pizzip";
-// @ts-ignore
-import ImageModule from "docxtemplater-image-module-free";
-
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      const base64String = (reader.result as string).split(",")[1];
-      resolve(base64String);
-    };
-    reader.onerror = (error) => reject(error);
-  });
-};
+import { supabase } from "@/lib/supabase";
+import type { Company, Template } from "@/lib/types/database";
+import { extractExcelData } from "@/services/excel-service";
+import { generateWordDocument, fileToBase64 } from "@/services/docx-service";
+import { convertToPdf } from "@/services/pdf-service";
 
 export function useCertificates() {
+  // --- ESTADOS DE ARCHIVOS Y SELECCIÓN ---
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
@@ -33,6 +19,7 @@ export function useCertificates() {
   );
   const [loadingTemplates, setLoadingTemplates] = useState(false);
 
+  // --- ESTADOS DEL PROCESO ---
   const [isProcessing, setIsProcessing] = useState(false);
   const [isMapped, setIsMapped] = useState(false);
   const [wordGenerated, setWordGenerated] = useState<Blob | null>(null);
@@ -40,6 +27,7 @@ export function useCertificates() {
   const [processError, setProcessError] = useState<string | null>(null);
   const [processWarning, setProcessWarning] = useState<string | null>(null);
 
+  // --- CARGA DE DATOS (Supabase) ---
   useEffect(() => {
     async function fetchCompanies() {
       const { data, error } = await supabase
@@ -54,7 +42,10 @@ export function useCertificates() {
   }, []);
 
   useEffect(() => {
-    if (!selectedCompany) return;
+    if (!selectedCompany) {
+      setTemplates([]);
+      return;
+    }
     async function fetchTemplates() {
       setLoadingTemplates(true);
       const { data, error } = await supabase
@@ -69,6 +60,11 @@ export function useCertificates() {
     fetchTemplates();
   }, [selectedCompany]);
 
+  // --- ACCIONES PRINCIPALES ---
+
+  /**
+   * PASO 1: Analiza el Excel y genera el documento Word en memoria
+   */
   const handleAnalyze = useCallback(
     async (imageFiles: Record<string, File>) => {
       if (!excelFile || !selectedTemplate) return;
@@ -76,11 +72,13 @@ export function useCertificates() {
       setProcessError(null);
 
       try {
+        // 1. Extraer datos del Excel usando el servicio
         const { finalData } = await extractExcelData(
           excelFile,
           selectedTemplate.mapping,
         );
 
+        // 2. Convertir imágenes a Base64
         const imageData: Record<string, string> = {};
         for (const [tag, file] of Object.entries(imageFiles)) {
           if (file) {
@@ -89,67 +87,17 @@ export function useCertificates() {
           }
         }
 
+        // 3. Generar el Word usando el servicio de DOCX
         const mergedData = { ...finalData, ...imageData };
-        const responseTemplate = await fetch(selectedTemplate.file_url!);
-        const content = await responseTemplate.arrayBuffer();
-        const zip = new PizZip(content);
-
-        const imageOptions = {
-          centered: true,
-          getImage: (tagValue: string) => {
-            if (!tagValue) return null;
-            try {
-              const binaryString = window.atob(tagValue);
-              const bytes = new Uint8Array(binaryString.length);
-              for (let i = 0; i < binaryString.length; i++)
-                bytes[i] = binaryString.charCodeAt(i);
-              return bytes.buffer;
-            } catch (e) {
-              return null;
-            }
-          },
-          // ESTA ES LA CLAVE:
-          // Intentamos recuperar el tamaño del contenedor original de Word
-          getSize: (img: any, tagValue: any, tagName: any) => {
-            // Si quieres que sea EXACTO al tamaño que pusiste en el código anterior
-            // pero viste que 600 era mucho, bájalo aquí a lo que mida tu celda.
-            // Prueba con 540 (ancho estándar de una página A4 con márgenes)
-            return [540, 300];
-          },
-        };
-
-        const imageModule = new ImageModule(imageOptions);
-        const DocxtemplaterLib: any =
-          (Docxtemplater as any).default || Docxtemplater;
-
-        const doc = new DocxtemplaterLib(zip, {
-          paragraphLoop: true,
-          linebreaks: true,
-          modules: [imageModule],
-          parser: (tag: string) => {
-            return {
-              get: (scope: any) => {
-                const clean = tag
-                  .replace(/<[^>]+>/g, "")
-                  .replace(/[^a-zA-Z0-9]/g, "")
-                  .trim();
-                return scope[clean];
-              },
-            };
-          },
-        });
-
-        doc.render(mergedData);
-
-        const generatedBlob = doc.getZip().generate({
-          type: "blob",
-          mimeType: "application/vnd.officedocument.wordprocessingml.document",
-        });
+        const generatedBlob = await generateWordDocument(
+          selectedTemplate.file_url!,
+          mergedData,
+        );
 
         setWordGenerated(generatedBlob);
         setIsMapped(true);
       } catch (err: any) {
-        setProcessError(err.message);
+        setProcessError(err.message || "Error al procesar los documentos");
       } finally {
         setIsProcessing(false);
       }
@@ -157,54 +105,46 @@ export function useCertificates() {
     [excelFile, selectedTemplate],
   );
 
+  /**
+   * PASO 2: Envía el Word generado al servidor para convertirlo a PDF
+   */
   const handleGenerate = useCallback(async () => {
     if (!wordGenerated) return;
     setIsProcessing(true);
     setProcessError(null);
 
     try {
-      const formData = new FormData();
-      const fileToSend = new File([wordGenerated], "final_document.docx", {
-        type: "application/vnd.officedocument.wordprocessingml.document",
-      });
-      formData.append("file", fileToSend);
+      // 1. Convertir a PDF usando el servicio (este servicio también registra la métrica)
+      const pdfBlob = await convertToPdf(wordGenerated);
 
-      const responseApi = await fetch("/api/convert-to-pdf", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!responseApi.ok) throw new Error("Error en conversión a PDF");
-
-      const pdfBlob = await responseApi.blob();
-      setPdfUrl(window.URL.createObjectURL(pdfBlob));
-
-      // ✅ REGISTRO DE GENERACIÓN EXITOSA
-      // Se ejecuta apenas el motor de PDF termina con éxito
-      const { error: rpcError } = await supabase.rpc("record_generation");
-      if (rpcError) {
-        console.warn("⚠️ Error al registrar métrica de generación:", rpcError);
-      } else {
-        console.log("📈 Generación exitosa registrada en el dashboard.");
-      }
+      // 2. Crear URL para visualización/descarga
+      const url = window.URL.createObjectURL(pdfBlob);
+      setPdfUrl(url);
     } catch (err: any) {
-      setProcessError(err.message);
+      setProcessError(err.message || "Error en la conversión a PDF");
     } finally {
       setIsProcessing(false);
     }
   }, [wordGenerated]);
+
+  /**
+   * PASO 3: Descarga el PDF final
+   */
   const handleDownload = useCallback(() => {
     if (!pdfUrl) return;
 
     const link = document.createElement("a");
     link.href = pdfUrl;
-    link.download = `Certificado_${selectedCompany?.name.replace(/\s+/g, "_") || "Generado"}.pdf`;
+    link.download = `Certificado_${
+      selectedCompany?.name.replace(/\s+/g, "_") || "Generado"
+    }.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   }, [pdfUrl, selectedCompany]);
 
   return {
+    // Datos y Selección
     excelFile,
     setExcelFile,
     companies,
@@ -215,6 +155,8 @@ export function useCertificates() {
     selectedTemplate,
     setSelectedTemplate,
     loadingTemplates,
+
+    // Estados de UI
     isProcessing,
     isMapped,
     pdfUrl,
@@ -222,11 +164,13 @@ export function useCertificates() {
     processWarning,
     isReady: !!(selectedCompany && selectedTemplate && excelFile),
     wordGenerated,
+
+    // Funciones
     handleAnalyze,
     handleGenerate,
     handleDownload,
-    setIsMapped, // <--- Agrégalo
-    setWordGenerated, // <--- Agrégalo
+    setIsMapped,
+    setWordGenerated,
     setPdfUrl,
   };
 }

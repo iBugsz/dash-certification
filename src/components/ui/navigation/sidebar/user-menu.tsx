@@ -12,7 +12,7 @@ import {
   FileText,
   Info,
 } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase";
 
 interface UserMenuProps {
   initials: string;
@@ -129,15 +129,18 @@ export default function UserMenu({
             className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-fg)]"
           >
             <Settings size={14} className="opacity-70" />
-            <span className="flex-1 text-[12px]">Configuración</span>
-            <span className="text-[10px] opacity-40 font-mono">⌘,</span>
+            <span className="flex-1 text-[12px] cursor-pointer">
+              Configuración
+            </span>
           </button>
 
           {/* ITEM CON SUBMENU FLOTANTE */}
           <div className="relative group/submenu">
             <button className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-fg)] transition-colors">
               <Info size={14} className="opacity-70" />
-              <span className="flex-1 text-[12px]">Más información</span>
+              <span className="flex-1 text-[12px] cursor-pointer">
+                Más información
+              </span>
               <ChevronRight size={14} className="opacity-40" />
             </button>
 
@@ -151,22 +154,22 @@ export default function UserMenu({
                 boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
               }}
             >
-              <button className="w-full flex items-center justify-between px-3 py-2.5 text-[12px] hover:bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-fg)]">
+              <button className="cursor-pointer w-full flex items-center justify-between px-3 py-2.5 text-[12px] hover:bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-fg)]">
                 <span>Cursos</span>
                 <ExternalLink size={12} className="opacity-40" />
               </button>
-              <button className="w-full flex items-center justify-between px-3 py-2.5 text-[12px] hover:bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-fg)]">
+              <button className="cursor-pointer w-full flex items-center justify-between px-3 py-2.5 text-[12px] hover:bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-fg)]">
                 <span>Política de uso</span>
                 <ExternalLink size={12} className="opacity-40" />
               </button>
-              <button className="w-full flex items-center justify-between px-3 py-2.5 text-[12px] hover:bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-fg)]">
+              <button className="cursor-pointer w-full flex items-center justify-between px-3 py-2.5 text-[12px] hover:bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-fg)]">
                 <span>Política de privacidad</span>
                 <ExternalLink size={12} className="opacity-40" />
               </button>
 
               <div className="my-1 h-[1px] bg-[var(--sidebar-divider)] mx-2" />
 
-              <button className="w-full flex items-center justify-between px-3 py-2.5 text-[12px] hover:bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-fg)]">
+              <button className="cursor-pointer w-full flex items-center justify-between px-3 py-2.5 text-[12px] hover:bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-fg)]">
                 <div className="flex items-center gap-2">
                   <Keyboard size={14} className="opacity-70" />
                   <span>Atajos de teclado</span>
@@ -183,7 +186,9 @@ export default function UserMenu({
             className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-fg)]"
           >
             <LogOut size={14} className="opacity-70" />
-            <span className="flex-1 text-[12px]">Cerrar sesión</span>
+            <span className="cursor-pointer flex-1 text-[12px]">
+              Cerrar sesión
+            </span>
           </button>
         </div>
       )}

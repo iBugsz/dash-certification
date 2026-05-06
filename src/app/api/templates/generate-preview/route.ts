@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
-import { convertWordToPdf } from "@/lib/adobe/converter";
+import { convertWordToPdf } from "@/services/adobe/converter";
 import { createClient } from "@supabase/supabase-js";
 
-export const maxDuration = 60; 
+export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
 // Instancia fuera para reutilizar conexión
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
 export async function POST(request: Request) {
@@ -16,7 +16,10 @@ export async function POST(request: Request) {
     const { templateId, storagePath } = await request.json();
 
     if (!templateId || !storagePath) {
-      return NextResponse.json({ error: "Faltan templateId o storagePath" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Faltan templateId o storagePath" },
+        { status: 400 },
+      );
     }
 
     // --- 1. DESCARGAR EL .DOCX DESDE EL STORAGE ---
@@ -26,7 +29,9 @@ export async function POST(request: Request) {
 
     if (downloadError || !fileData) {
       console.error("❌ Error descarga:", downloadError);
-      throw new Error(`Error descargando el archivo: ${downloadError?.message}`);
+      throw new Error(
+        `Error descargando el archivo: ${downloadError?.message}`,
+      );
     }
 
     // --- 2. CONVERTIR CON ADOBE (Primero la acción que gasta créditos) ---
@@ -36,15 +41,23 @@ export async function POST(request: Request) {
 
     // --- 3. TRATAMIENTO Y VALIDACIÓN DEL BUFFER ---
     let finalBuffer: Buffer;
-    
+
     // Lógica robusta para detectar el Buffer del resultado de Adobe
     if (Buffer.isBuffer(pdfResult)) {
       finalBuffer = pdfResult;
-    } else if (pdfResult && typeof (pdfResult as any).arrayBuffer === 'function') {
+    } else if (
+      pdfResult &&
+      typeof (pdfResult as any).arrayBuffer === "function"
+    ) {
       finalBuffer = Buffer.from(await (pdfResult as any).arrayBuffer());
-    } else if (pdfResult && typeof (pdfResult as any)[Symbol.asyncIterator] === 'function') {
+    } else if (
+      pdfResult &&
+      typeof (pdfResult as any)[Symbol.asyncIterator] === "function"
+    ) {
       const chunks = [];
-      for await (const chunk of (pdfResult as any)) { chunks.push(chunk); }
+      for await (const chunk of pdfResult as any) {
+        chunks.push(chunk);
+      }
       finalBuffer = Buffer.concat(chunks);
     } else {
       finalBuffer = Buffer.from(pdfResult as any);
@@ -58,7 +71,11 @@ export async function POST(request: Request) {
     // Si Adobe falló arriba, el código salta al catch y nunca llega aquí.
     console.log("✅ Adobe OK. Actualizando contador de uso...");
     const { error: rpcError } = await supabase.rpc("increment_adobe_usage");
-    if (rpcError) console.warn("⚠️ Contador no actualizado, pero el PDF es válido:", rpcError);
+    if (rpcError)
+      console.warn(
+        "⚠️ Contador no actualizado, pero el PDF es válido:",
+        rpcError,
+      );
 
     // --- 5. GUARDAR EL PDF EN PREVIEWS/ ---
     const previewPath = `previews/${templateId}.pdf`;
@@ -67,7 +84,7 @@ export async function POST(request: Request) {
       .from("templates")
       .upload(previewPath, new Uint8Array(finalBuffer), {
         contentType: "application/pdf",
-        upsert: true, 
+        upsert: true,
       });
 
     if (uploadError) {
@@ -79,12 +96,12 @@ export async function POST(request: Request) {
     const { data: urlData } = supabase.storage
       .from("templates")
       .getPublicUrl(previewPath);
-    
+
     const { error: updateError } = await supabase
       .from("templates")
-      .update({ 
+      .update({
         preview_url: urlData.publicUrl,
-        has_preview: true 
+        has_preview: true,
       })
       .eq("id", templateId);
 
@@ -93,16 +110,15 @@ export async function POST(request: Request) {
       throw new Error("Error actualizando la base de datos");
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      previewUrl: urlData.publicUrl 
+    return NextResponse.json({
+      success: true,
+      previewUrl: urlData.publicUrl,
     });
-    
   } catch (error: any) {
     console.error("❌ Error crítico en generate-preview:", error);
     return NextResponse.json(
-      { error: error.message || "Error interno en el servidor" }, 
-      { status: 500 }
+      { error: error.message || "Error interno en el servidor" },
+      { status: 500 },
     );
   }
 }

@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { Template, TemplateFormData } from "@/lib/templates/types";
-import { deleteTemplateFile } from "@/lib/templates/utils";
+import { supabase } from "@/lib/supabase";
+import { Template, TemplateFormData } from "@/lib/types/database";
+import { deleteTemplateFile } from "@/services/template-service";
 
 const sanitizeFileName = (name: string) => {
   return name
@@ -19,7 +19,7 @@ const sanitizeFileName = (name: string) => {
 const triggerPreviewGeneration = (
   templateId: string,
   filePath: string,
-  onSuccess: (previewUrl: string) => void
+  onSuccess: (previewUrl: string) => void,
 ) => {
   // NO usamos 'await' aquí para que el hilo principal siga libre
   fetch("/api/templates/generate-preview", {
@@ -27,7 +27,7 @@ const triggerPreviewGeneration = (
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ templateId, storagePath: filePath }),
     // Esto es clave: le decimos al navegador que mantenga la conexión viva
-    keepalive: true, 
+    keepalive: true,
   })
     .then(async (res) => {
       if (!res.ok) throw new Error("Error en servidor");
@@ -35,7 +35,10 @@ const triggerPreviewGeneration = (
       if (previewUrl) onSuccess(previewUrl);
     })
     .catch((err) => {
-      console.warn("[generate-preview] Error de fondo (Adobe tardó mucho o falló):", err.message);
+      console.warn(
+        "[generate-preview] Error de fondo (Adobe tardó mucho o falló):",
+        err.message,
+      );
     });
 };
 
@@ -70,32 +73,32 @@ export function useTemplates() {
   }, [fetchTemplates]);
 
   // Cambia la función existente por esta:
-const updateTemplateMapping = async (id: string, mapping: any) => {
-  try {
-    // Al usar 'any' aquí, permitimos que acepte el objeto complejo MappingField
-    // sin que TypeScript se queje en el build de Vercel.
-    const { error } = await supabase
-      .from("templates")
-      .update({ mapping })
-      .eq("id", id);
+  const updateTemplateMapping = async (id: string, mapping: any) => {
+    try {
+      // Al usar 'any' aquí, permitimos que acepte el objeto complejo MappingField
+      // sin que TypeScript se queje en el build de Vercel.
+      const { error } = await supabase
+        .from("templates")
+        .update({ mapping })
+        .eq("id", id);
 
-    if (error) {
-      console.error("Error actualizando mapeo en Supabase:", error.message);
-      throw error;
+      if (error) {
+        console.error("Error actualizando mapeo en Supabase:", error.message);
+        throw error;
+      }
+
+      // Refrescamos la lista para que la UI tenga los datos nuevos
+      await fetchTemplates();
+    } catch (err) {
+      console.error("Error crítico actualizando mapeo:", err);
+      throw err;
     }
-
-    // Refrescamos la lista para que la UI tenga los datos nuevos
-    await fetchTemplates();
-  } catch (err) {
-    console.error("Error crítico actualizando mapeo:", err);
-    throw err;
-  }
-};
+  };
 
   const uploadTemplate = async (
     file: File,
     form: TemplateFormData,
-    onDone: () => void
+    onDone: () => void,
   ) => {
     if (!file) return;
     setUploading(true);
@@ -110,7 +113,10 @@ const updateTemplateMapping = async (id: string, mapping: any) => {
         .upload(filePath, file, { cacheControl: "3600", upsert: false });
 
       if (uploadError) {
-        console.error("Error subiendo archivo al Storage:", uploadError.message);
+        console.error(
+          "Error subiendo archivo al Storage:",
+          uploadError.message,
+        );
         setUploading(false);
         return;
       }
@@ -150,17 +156,13 @@ const updateTemplateMapping = async (id: string, mapping: any) => {
 
       // PASO 4 — Lanzar conversión a PDF en background (sin await)
       // Cuando termina, actualiza solo ese template en el estado local
-      triggerPreviewGeneration(
-        insertedRows.id,
-        filePath,
-        (previewUrl) => {
-          setTemplates((prev) =>
-            prev.map((t) =>
-              t.id === insertedRows.id ? { ...t, preview_url: previewUrl } : t
-            )
-          );
-        }
-      );
+      triggerPreviewGeneration(insertedRows.id, filePath, (previewUrl) => {
+        setTemplates((prev) =>
+          prev.map((t) =>
+            t.id === insertedRows.id ? { ...t, preview_url: previewUrl } : t,
+          ),
+        );
+      });
     } catch (err) {
       console.error("Error crítico en subida:", err);
       setUploading(false);
@@ -172,9 +174,7 @@ const updateTemplateMapping = async (id: string, mapping: any) => {
       await deleteTemplateFile(filePath);
 
       // Borrar también el preview del storage si existe
-      await supabase.storage
-        .from("templates")
-        .remove([`previews/${id}.pdf`]);
+      await supabase.storage.from("templates").remove([`previews/${id}.pdf`]);
 
       const { error } = await supabase.from("templates").delete().eq("id", id);
       if (error) console.error("Error eliminando:", error.message);

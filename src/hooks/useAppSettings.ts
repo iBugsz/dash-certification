@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase";
 
 export function useAppSettings() {
   const [appName, setAppName] = useState("AutoCert");
@@ -41,7 +41,10 @@ export function useAppSettings() {
     try {
       const { error } = await supabase
         .from("app_settings")
-        .upsert({ key: "app_name", value: newName.trim() }, { onConflict: "key" });
+        .upsert(
+          { key: "app_name", value: newName.trim() },
+          { onConflict: "key" },
+        );
 
       if (error) {
         throw error;

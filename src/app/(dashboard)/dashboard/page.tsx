@@ -16,17 +16,6 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 lg:p-10 space-y-8 dark:bg-transparent min-h-screen font-poppins">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-black text-[var(--foreground)] dark:text-white tracking-tight italic">
-            Dashboard
-          </h1>
-          <p className="text-sm text-[var(--sidebar-fg-muted)]">
-            Bienvenido de nuevo, Nelson.
-          </p>
-        </div>
-      </header>
-
       {/* GRID MAESTRO DE 12 COLUMNAS */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* LADO IZQUIERDO (8 COLUMNAS) - FLUJO TÉCNICO */}

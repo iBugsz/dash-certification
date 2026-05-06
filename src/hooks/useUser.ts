@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 
 export function useUser() {
@@ -8,7 +8,6 @@ export function useUser() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-
     // Sesión inicial
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);

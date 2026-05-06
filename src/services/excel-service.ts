@@ -12,9 +12,9 @@ export async function extractExcelData(file: File, mapping: any) {
 
     // 1. Intentar acceder a la hoja
     const worksheet = workbook.Sheets[sheetName];
-    
+
     if (!worksheet) {
-      finalData[variableWord] = ""; 
+      finalData[variableWord] = "";
       missingInExcel.push(`${variableWord} (Hoja "${sheetName}" no existe)`);
       continue;
     }

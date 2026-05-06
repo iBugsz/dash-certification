@@ -9,8 +9,8 @@ import {
   Eye,
   Loader2,
 } from "lucide-react";
-import { Template } from "@/lib/templates/types";
-import { formatDate } from "@/lib/templates/utils";
+import { Template } from "@/lib/types/database";
+import { formatDate } from "@/lib/utils";
 
 interface Props {
   template: Template;

@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { Folder } from "lucide-react";
 import { BucketStat } from "@/hooks/useDashboardData";
-import { formatBytes } from "@/lib/dashboard/utils";
+import { formatBytes } from "@/lib/utils";
 
 const BUCKET_COLORS: Record<string, string> = {
   templates: "#6366f1",

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { ActivityLog } from "@/lib/activity/types";
+import { supabase } from "@/lib/supabase";
+import { ActivityLog } from "@/lib/types/activity";
 
 export interface BucketStat {
   bucket: string;
@@ -27,7 +27,7 @@ export interface DashboardData {
   loading: boolean;
 }
 
-const DB_LIMIT    = 500  * 1024 * 1024;
+const DB_LIMIT = 500 * 1024 * 1024;
 const STORE_LIMIT = 1024 * 1024 * 1024;
 
 const ALL_BUCKETS = ["templates", "logos", "generated", "catalogs"];
@@ -44,7 +44,11 @@ export function useDashboardData(): DashboardData {
     dbLimitBytes: DB_LIMIT,
     storageUsedBytes: 0,
     storageLimitBytes: STORE_LIMIT,
-    buckets: ALL_BUCKETS.map((b) => ({ bucket: b, file_count: 0, used_bytes: 0 })),
+    buckets: ALL_BUCKETS.map((b) => ({
+      bucket: b,
+      file_count: 0,
+      used_bytes: 0,
+    })),
     adobeUsed: 0,
     adobeLimit: 500,
     loading: true,
@@ -56,7 +60,7 @@ export function useDashboardData(): DashboardData {
         const now = new Date();
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(now.getDate() - 6);
-        const startDateStr = sevenDaysAgo.toISOString().split('T')[0];
+        const startDateStr = sevenDaysAgo.toISOString().split("T")[0];
 
         const [
           { count: companiesCount },
@@ -68,8 +72,12 @@ export function useDashboardData(): DashboardData {
           { data: generationStatsAll },
           { data: activityLogs },
         ] = await Promise.all([
-          supabase.from("companies").select("*", { count: "exact", head: true }),
-          supabase.from("templates").select("*", { count: "exact", head: true }),
+          supabase
+            .from("companies")
+            .select("*", { count: "exact", head: true }),
+          supabase
+            .from("templates")
+            .select("*", { count: "exact", head: true }),
           supabase
             .from("certificate_jobs")
             .select("success_count")
@@ -95,15 +103,19 @@ export function useDashboardData(): DashboardData {
         const last7Days = Array.from({ length: 7 }, (_, i) => {
           const d = new Date();
           d.setDate(d.getDate() - (6 - i));
-          const dateKey = d.toISOString().split('T')[0];
+          const dateKey = d.toISOString().split("T")[0];
           return {
             dateKey,
-            label: d.toLocaleDateString("es-CO", { day: "2-digit", month: "short" }).replace('.', ''),
+            label: d
+              .toLocaleDateString("es-CO", { day: "2-digit", month: "short" })
+              .replace(".", ""),
           };
         });
 
-        const formattedGenerationData = last7Days.map(day => {
-          const dbEntry = generationStatsWeekly?.find(item => item.date === day.dateKey);
+        const formattedGenerationData = last7Days.map((day) => {
+          const dbEntry = generationStatsWeekly?.find(
+            (item) => item.date === day.dateKey,
+          );
           return {
             date: day.label,
             count: dbEntry ? dbEntry.count : 0,
@@ -112,12 +124,20 @@ export function useDashboardData(): DashboardData {
 
         const generationTotal = (generationStatsAll ?? []).reduce(
           (sum, row) => sum + Number(row.count ?? 0),
-          0
+          0,
         );
 
-        const totalCertificates = (jobs ?? []).reduce((sum, job) => sum + (job.success_count ?? 0), 0);
-        const adobeUsed = Number(quotaRows?.find((r) => r.key === "adobe_pdf_quota_used")?.value ?? 0);
-        const adobeLimit = Number(quotaRows?.find((r) => r.key === "adobe_pdf_quota_limit")?.value ?? 500);
+        const totalCertificates = (jobs ?? []).reduce(
+          (sum, job) => sum + (job.success_count ?? 0),
+          0,
+        );
+        const adobeUsed = Number(
+          quotaRows?.find((r) => r.key === "adobe_pdf_quota_used")?.value ?? 0,
+        );
+        const adobeLimit = Number(
+          quotaRows?.find((r) => r.key === "adobe_pdf_quota_limit")?.value ??
+            500,
+        );
 
         const stats = statsRaw as any;
         const fetchedBuckets: BucketStat[] = stats?.buckets ?? [];
@@ -169,7 +189,7 @@ export function useDashboardData(): DashboardData {
               recentActivity: activityLogs as ActivityLog[],
             }));
           }
-        }
+        },
       )
       .subscribe();
 

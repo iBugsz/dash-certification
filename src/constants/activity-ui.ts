@@ -1,10 +1,15 @@
-import { 
-  Plus, Edit3, Trash2, FileCheck, 
-  Building2, LayoutTemplate, FileText 
+import {
+  Plus,
+  Edit3,
+  Trash2,
+  FileCheck,
+  Building2,
+  LayoutTemplate,
+  FileText,
 } from "lucide-react";
-import { ActivityAction, ActivityEntity } from "./types";
+import { ActivityAction, ActivityEntity } from "@/lib/types/activity";
 
-export const entityIcons: Record<ActivityEntity | 'DEFAULT', any> = {
+export const entityIcons: Record<ActivityEntity | "DEFAULT", any> = {
   TEMPLATE: LayoutTemplate,
   COMPANY: Building2,
   CERTIFICATE: FileCheck,

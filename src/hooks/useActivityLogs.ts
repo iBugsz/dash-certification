@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase";
 
 export interface ActivityLog {
   id: string;
@@ -52,7 +52,7 @@ export function useActivityLogs(limit?: number) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "activity_logs" },
-        () => fetchLogs()
+        () => fetchLogs(),
       )
       .subscribe();
 

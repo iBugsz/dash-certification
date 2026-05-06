@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { Company, CompanyFormData } from "@/lib/companies/types";
-import { deleteOldLogo } from "@/lib/companies/utils";
+import { supabase } from "@/lib/supabase";
+import { Company, CompanyFormData } from "@/lib/types/database";
+import { deleteOldLogo } from "@/services/company-service";
 
 export function useCompanies() {
   const [companies, setCompanies] = useState<Company[]>([]);

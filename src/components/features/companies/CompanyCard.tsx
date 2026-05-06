@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Mail, Phone, MoreVertical, Pencil, Trash2 } from "lucide-react";
-import { Company } from "@/lib/companies/types";
-import { getInitials } from "@/lib/companies/utils";
+import { Company } from "@/lib/types/database";
+import { getInitials } from "@/lib/utils";
 
 interface Props {
   company: Company;

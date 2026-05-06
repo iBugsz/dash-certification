@@ -1,3 +1,5 @@
+// ─── Activity Module Types ────────────────────────────────────────────────
+
 export type ActivityAction = "CREATE" | "UPDATE" | "DELETE" | "GENERATE";
 export type ActivityEntity = "TEMPLATE" | "COMPANY" | "CERTIFICATE";
 

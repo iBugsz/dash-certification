@@ -3,14 +3,14 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation"; // Importante para leer el Navbar
 import { Building2, Plus, SearchX } from "lucide-react";
-import { Company } from "@/lib/companies/types";
+import { Company } from "@/lib/types/database";
 import { useCompanies } from "@/hooks/useCompanies";
 import CompanyCard from "@/components/features/companies/CompanyCard";
 import CompanyCardSkeleton from "@/components/features/companies/CompanyCardSkeleton";
 import CompanyModal from "@/components/features/companies/CompanyModal";
 
-export const dynamic = 'force-dynamic';
-export const runtime = 'edge';
+export const dynamic = "force-dynamic";
+export const runtime = "edge";
 
 export default function CompaniesPage() {
   const { companies, loading, saveCompany, deleteCompany } = useCompanies();

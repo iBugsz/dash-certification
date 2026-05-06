@@ -299,8 +299,8 @@ export function GeminiAssistantCard() {
           <div className="p-2 bg-violet-100 dark:bg-violet-500/20 rounded-lg">
             <Sparkles size={16} className="text-[#8633FF]" />
           </div>
-          <h3 className="text-[13px] font-bold uppercase tracking-widest text-slate-900 dark:text-white">
-            Asistente AI - AutoCert Pro
+          <h3 className="text-[13px] font-bold uppercase text-slate-900 dark:text-white">
+            Asistente AI
           </h3>
         </div>
         {history.length > 0 && (
@@ -426,7 +426,7 @@ export function GeminiAssistantCard() {
           placeholder={
             attachedFile
               ? "¿Qué querés hacer con este archivo?"
-              : "Escribí tu pregunta... (Enter para enviar)"
+              : "¿Cómo puedo ayudarle hoy?"
           }
           className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl p-3 pr-20 text-sm focus:outline-none focus:ring-2 focus:ring-[#8633FF]/50 resize-none min-h-[80px] transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
           disabled={loading}
@@ -435,14 +435,14 @@ export function GeminiAssistantCard() {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={loading}
-            className="p-2 text-slate-400 hover:text-[#8633FF] transition-colors disabled:opacity-40 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5"
+            className="p-2 text-slate-400 cursor-pointer hover:text-[#8633FF] transition-colors disabled:opacity-40 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5"
           >
             <Paperclip size={15} />
           </button>
           <button
             onClick={handleAsk}
             disabled={loading || (!prompt.trim() && !attachedFile)}
-            className="p-2.5 bg-[#8633FF] hover:bg-[#7029d9] text-white rounded-xl transition-colors disabled:opacity-40 shadow-sm"
+            className="p-2.5 cursor-pointer bg-[#8633FF] hover:bg-[#7029d9] text-white rounded-xl transition-colors disabled:opacity-40 shadow-sm"
           >
             {loading ? (
               <Loader2 size={15} className="animate-spin" />

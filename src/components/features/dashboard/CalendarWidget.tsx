@@ -178,7 +178,7 @@ export function CalendarWidget() {
             onSelect={handleSelectDate}
             locale={es}
             weekStartsOn={1}
-            className="p-0 w-full"
+            className="p-0 w-full bg-transparent"
             classNames={{
               months: "w-full",
               month: "w-full space-y-4",

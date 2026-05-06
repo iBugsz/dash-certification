@@ -3,11 +3,15 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Calendar, User, ImageOff } from "lucide-react";
-import { ActivityLog } from "@/lib/activity/types";
-import { entityIcons, actionStyles } from "@/lib/activity/config";
-import { formatActivityAction } from "@/lib/activity/utils";
+import { ActivityLog } from "@/lib/types/activity";
+import {
+  entityIcons,
+  actionStyles,
+  actionIcons,
+} from "@/constants/activity-ui";
+import { formatActivityAction } from "@/lib/utils";
 import { useUser } from "@/hooks/useUser";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase";
 
 interface ProfileEntry {
   full_name: string | null;

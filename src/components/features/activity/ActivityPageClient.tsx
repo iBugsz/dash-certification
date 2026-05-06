@@ -3,12 +3,12 @@
 import { useState, useMemo, useEffect } from "react";
 import { ActivityLogList } from "./ActivityLogList";
 import { ActivityFilter } from "./ActivityFilter";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase";
 import {
   ActivityLog,
   ActivityAction,
   ActivityEntity,
-} from "@/lib/activity/types";
+} from "@/lib/types/activity";
 
 interface Filters {
   action?: ActivityAction;
