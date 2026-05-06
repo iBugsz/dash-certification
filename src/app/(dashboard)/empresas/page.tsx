@@ -10,6 +10,7 @@ import CompanyCardSkeleton from "@/components/features/companies/CompanyCardSkel
 import CompanyModal from "@/components/features/companies/CompanyModal";
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export default function CompaniesPage() {
   const { companies, loading, saveCompany, deleteCompany } = useCompanies();
