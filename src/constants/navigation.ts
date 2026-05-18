@@ -5,6 +5,7 @@ import {
   FileText,
   Building2,
   Book,
+  Layers, // ← ícono para Bloques CAD
 } from "lucide-react";
 
 export const MENU_ITEMS = [
@@ -15,5 +16,5 @@ export const MENU_ITEMS = [
   { name: "Empresas", href: "/empresas", icon: Building2 },
   { name: "Actividad", href: "/actividad", icon: History },
   { name: "Homologaciones", href: "/homologaciones", icon: History },
-  // Si mañana quieres agregar "Ajustes", solo lo pones aquí y listo.
+  { name: "bloques-cad", href: "/bloques-cad", icon: Layers }, // ← NUEVO
 ];
