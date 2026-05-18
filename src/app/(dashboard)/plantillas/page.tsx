@@ -1,16 +1,29 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus, Search, FileX, AlertTriangle, Trash2, X } from "lucide-react";
+import {
+  Plus,
+  Search,
+  FileX,
+  AlertTriangle,
+  Trash2,
+  X,
+  Tag,
+} from "lucide-react";
 import { useTemplates } from "@/hooks/useTemplates";
 import TemplateRow from "@/components/features/templates/TemplateRow";
 import TemplateRowSkeleton from "@/components/features/templates/TemplateRowSkeleton";
 import TemplateUploadModal from "@/components/features/templates/TemplateUploadModal";
 import MappingModal from "@/components/features/templates/MappingModal";
-// 1. Importamos el PreviewDrawer
 import { PreviewDrawer } from "@/components/features/certificates/PreviewDrawer";
-// Importamos los tipos necesarios para evitar el error de TS en el deploy
 import { Template, MappingField } from "@/lib/types/database";
+import { supabase } from "@/lib/supabase";
+import { useEffect } from "react";
+
+interface SimpleHomologationType {
+  id: string;
+  name: string;
+}
 
 export default function TemplatesPage() {
   const {
@@ -20,6 +33,7 @@ export default function TemplatesPage() {
     uploadTemplate,
     deleteTemplate,
     updateTemplateMapping,
+    updateTemplateHomologationType,
   } = useTemplates();
 
   const [showModal, setShowModal] = useState(false);
@@ -27,25 +41,60 @@ export default function TemplatesPage() {
   const [selectedTemplateForMapping, setSelectedTemplateForMapping] =
     useState<Template | null>(null);
 
-  // --- ESTADOS PARA VISTA PREVIA ---
+  // Vista previa
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedPdfUrl, setSelectedPdfUrl] = useState<string | null>(null);
-
   const handleOpenPreview = (url: string) => {
     setSelectedPdfUrl(url);
     setIsPreviewOpen(true);
   };
-  // ---------------------------------
 
-  // Estado para Edición
+  // Edición nombre
   const [templateToEdit, setTemplateToEdit] = useState<Template | null>(null);
 
-  // Estado para Borrado
+  // Borrado
   const [templateToDelete, setTemplateToDelete] = useState<{
     id: string;
     path: string;
     name: string;
   } | null>(null);
+
+  // ← NUEVO: modal de tipo de homologación
+  const [templateForHomologation, setTemplateForHomologation] =
+    useState<Template | null>(null);
+  const [homologationTypes, setHomologationTypes] = useState<
+    SimpleHomologationType[]
+  >([]);
+  const [selectedHomologationTypeId, setSelectedHomologationTypeId] =
+    useState<string>("");
+  const [savingHomologation, setSavingHomologation] = useState(false);
+
+  // Cargar tipos al montar
+  useEffect(() => {
+    supabase
+      .from("homologation_types")
+      .select("id, name")
+      .eq("active", true)
+      .order("name")
+      .then(({ data }) => setHomologationTypes(data ?? []));
+  }, []);
+
+  // Cuando se abre el modal, pre-seleccionar el tipo actual
+  const openHomologationModal = (t: Template) => {
+    setTemplateForHomologation(t);
+    setSelectedHomologationTypeId(t.homologation_type_id ?? "");
+  };
+
+  const handleSaveHomologation = async () => {
+    if (!templateForHomologation) return;
+    setSavingHomologation(true);
+    await updateTemplateHomologationType(
+      templateForHomologation.id,
+      selectedHomologationTypeId || null,
+    );
+    setSavingHomologation(false);
+    setTemplateForHomologation(null);
+  };
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -67,14 +116,23 @@ export default function TemplatesPage() {
   const handleSaveEdit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const newName = formData.get("name") as string;
+    const newName = (formData.get("name") as string)?.trim();
+    const newHomologationTypeId = formData.get(
+      "homologation_type_id",
+    ) as string;
 
     if (templateToEdit && newName) {
-      console.log(
-        "Actualizando plantilla:",
+      await supabase
+        .from("templates")
+        .update({
+          name: newName,
+          homologation_type_id: newHomologationTypeId || null,
+        })
+        .eq("id", templateToEdit.id);
+
+      await updateTemplateHomologationType(
         templateToEdit.id,
-        "a nombre:",
-        newName,
+        newHomologationTypeId || null,
       );
       setTemplateToEdit(null);
     }
@@ -122,12 +180,13 @@ export default function TemplatesPage() {
                 {[
                   "Nombre del Archivo",
                   "Empresa Asignada",
+                  "Tipo Homologación",
                   "Última Modificación",
                   "Acciones",
                 ].map((col, i) => (
                   <th
                     key={col}
-                    className={`px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400 bg-slate-50/50 dark:bg-slate-800/30 ${i === 3 ? "text-right" : ""}`}
+                    className={`px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400 bg-slate-50/50 dark:bg-slate-800/30 ${i === 4 ? "text-right" : ""}`}
                   >
                     {col}
                   </th>
@@ -141,7 +200,7 @@ export default function TemplatesPage() {
                 ))
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={4}>
+                  <td colSpan={5}>
                     <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                       <FileX size={40} className="mb-3 opacity-20" />
                       <p className="font-medium text-sm">
@@ -160,7 +219,8 @@ export default function TemplatesPage() {
                     }
                     onMappingClick={(t) => setSelectedTemplateForMapping(t)}
                     onEditClick={(t) => setTemplateToEdit(t)}
-                    onPreviewClick={handleOpenPreview} // <-- Pasamos la función al Row
+                    onPreviewClick={handleOpenPreview}
+                    onHomologationClick={openHomologationModal} // ← nuevo prop
                   />
                 ))
               )}
@@ -192,7 +252,7 @@ export default function TemplatesPage() {
         />
       )}
 
-      {/* MODAL: VISTA PREVIA (DRAWER) */}
+      {/* MODAL: VISTA PREVIA */}
       <PreviewDrawer
         isOpen={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}
@@ -200,6 +260,71 @@ export default function TemplatesPage() {
         isProcessing={false}
         isMapped={true}
       />
+
+      {/* MODAL: TIPO DE HOMOLOGACIÓN ← NUEVO */}
+      {templateForHomologation && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[28px] shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in zoom-in-95">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/30">
+                    <Tag className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <h3 className="text-xl font-bold">Tipo de Homologación</h3>
+                </div>
+                <button
+                  onClick={() => setTemplateForHomologation(null)}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5 text-slate-400" />
+                </button>
+              </div>
+
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                Asigna el tipo de homologación para{" "}
+                <span className="font-semibold text-slate-700 dark:text-slate-200">
+                  "{templateForHomologation.name}"
+                </span>
+              </p>
+
+              <div className="relative">
+                <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <select
+                  value={selectedHomologationTypeId}
+                  onChange={(e) =>
+                    setSelectedHomologationTypeId(e.target.value)
+                  }
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">Sin tipo asignado</option>
+                  {homologationTypes.map((h) => (
+                    <option key={h.id} value={h.id}>
+                      {h.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-6 bg-slate-50 dark:bg-slate-800/50">
+              <button
+                onClick={() => setTemplateForHomologation(null)}
+                className="flex-1 px-4 py-3 rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveHomologation}
+                disabled={savingHomologation}
+                className="flex-1 px-4 py-3 rounded-xl font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/20 transition-all"
+              >
+                {savingHomologation ? "Guardando..." : "Guardar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL: EDITAR INFORMACIÓN */}
       {templateToEdit && (
@@ -219,6 +344,7 @@ export default function TemplatesPage() {
                 </div>
 
                 <div className="space-y-4">
+                  {/* Nombre */}
                   <div>
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
                       Nombre de visualización
@@ -231,10 +357,33 @@ export default function TemplatesPage() {
                       className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                     />
                   </div>
+
+                  {/* ← NUEVO: Tipo de homologación */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
+                      Tipo de homologación
+                    </label>
+                    <div className="relative">
+                      <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                      <select
+                        name="homologation_type_id"
+                        defaultValue={templateToEdit.homologation_type_id ?? ""}
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all appearance-none cursor-pointer"
+                      >
+                        <option value="">Sin tipo asignado</option>
+                        {homologationTypes.map((h) => (
+                          <option key={h.id} value={h.id}>
+                            {h.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
                   <div className="p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-xl">
                     <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed italic">
-                      Nota: Este cambio es estético. El archivo físico en el
-                      storage mantendrá su nombre original.
+                      Nota: El cambio de nombre es estético. El archivo físico
+                      en el storage mantendrá su nombre original.
                     </p>
                   </div>
                 </div>

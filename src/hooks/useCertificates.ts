@@ -28,6 +28,7 @@ export function useCertificates() {
   const [processWarning, setProcessWarning] = useState<string | null>(null);
 
   // --- CARGA DE DATOS (Supabase) ---
+  // ✅ fetchCompanies — sin cambios
   useEffect(() => {
     async function fetchCompanies() {
       const { data, error } = await supabase
@@ -41,6 +42,7 @@ export function useCertificates() {
     fetchCompanies();
   }, []);
 
+  // ✅ fetchTemplates — con el join agregado
   useEffect(() => {
     if (!selectedCompany) {
       setTemplates([]);
@@ -50,7 +52,7 @@ export function useCertificates() {
       setLoadingTemplates(true);
       const { data, error } = await supabase
         .from("templates")
-        .select("*")
+        .select("*, homologation_type:homologation_types(id, name, icon)")
         .eq("company_id", selectedCompany?.id)
         .eq("active", true)
         .order("name");

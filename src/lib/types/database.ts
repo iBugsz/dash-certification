@@ -42,22 +42,49 @@ export interface Template {
   preview_url: string | null;
   has_preview: boolean;
   company_id: string | null;
+  homologation_type_id: string | null; // ← nuevo
   variables: Record<string, string> | null;
   mapping: Record<string, any> | null;
   active: boolean;
   created_at: string;
   updated_at: string;
   company?: { id: string; name: string } | null;
+  homologation_type?: { id: string; name: string } | null; // ← nuevo
 }
 
 export interface TemplateFormData {
   name: string;
   description: string;
   company_id: string;
+  homologation_type_id: string; // ← nuevo
 }
 
 export const EMPTY_TEMPLATE_FORM: TemplateFormData = {
   name: "",
   description: "",
   company_id: "",
+  homologation_type_id: "", // ← nuevo
+};
+
+// ─── HOMOLOGATION TYPES ──────────────────────────────────────────────────
+export interface HomologationType {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string; // ← nuevo
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface HomologationTypeFormData {
+  name: string;
+  description: string;
+  icon: string; // ← nuevo
+}
+
+export const EMPTY_HOMOLOGATION_FORM: HomologationTypeFormData = {
+  name: "",
+  description: "",
+  icon: "FileQuestion", // ← nuevo
 };

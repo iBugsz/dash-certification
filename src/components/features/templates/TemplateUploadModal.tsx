@@ -1,16 +1,19 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { X, Upload, FileText, Building2 } from "lucide-react";
+import { X, Upload, FileText, Building2, Tag } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { TemplateFormData, EMPTY_TEMPLATE_FORM } from "@/lib/types/database";
-import type { Company } from "@/lib/types/database";
 import { formatFileSize } from "@/lib/utils";
 
 interface SimpleCompany {
   id: string;
   name: string;
 }
+interface SimpleHomologationType {
+  id: string;
+  name: string;
+} // ← nuevo
 
 interface Props {
   uploading: boolean;
@@ -30,6 +33,9 @@ export default function TemplateUploadModal({
   const [form, setForm] = useState<TemplateFormData>(EMPTY_TEMPLATE_FORM);
   const [file, setFile] = useState<File | null>(null);
   const [companies, setCompanies] = useState<SimpleCompany[]>([]);
+  const [homologationTypes, setHomologationTypes] = useState<
+    SimpleHomologationType[]
+  >([]); // ← nuevo
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -39,6 +45,14 @@ export default function TemplateUploadModal({
       .select("id, name")
       .order("name")
       .then(({ data }) => setCompanies(data ?? []));
+
+    // ← nuevo: cargar tipos de homologación
+    supabase
+      .from("homologation_types")
+      .select("id, name")
+      .eq("active", true)
+      .order("name")
+      .then(({ data }) => setHomologationTypes(data ?? []));
   }, []);
 
   const handleFile = (f: File) => {
@@ -187,6 +201,36 @@ export default function TemplateUploadModal({
                 {companies.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* ← NUEVO: Tipo de homologación */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">
+              Tipo de homologación{" "}
+              <span className="text-slate-300 dark:text-slate-600 normal-case font-normal">
+                (opcional)
+              </span>
+            </label>
+            <div className="relative">
+              <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <select
+                value={form.homologation_type_id}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    homologation_type_id: e.target.value,
+                  }))
+                }
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[var(--input-bg)] text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)] text-sm transition-all appearance-none cursor-pointer"
+              >
+                <option value="">Sin tipo asignado</option>
+                {homologationTypes.map((h) => (
+                  <option key={h.id} value={h.id}>
+                    {h.name}
                   </option>
                 ))}
               </select>

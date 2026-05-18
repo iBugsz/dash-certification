@@ -10,9 +10,14 @@ import { StatsOverviewCard } from "@/components/features/dashboard/StatsOverview
 import { CalendarWidget } from "@/components/features/dashboard/CalendarWidget";
 // Importamos el nuevo componente del asistente
 import { GeminiAssistantCard } from "@/components/features/dashboard/GeminiAssistantCard";
+import LoadingDashboard from "./loading";
 
 export default function DashboardPage() {
   const d = useDashboardData();
+
+  if (d.loading) {
+    return <LoadingDashboard />;
+  }
 
   return (
     <div className="p-6 lg:p-10 space-y-8 dark:bg-transparent min-h-screen font-poppins">

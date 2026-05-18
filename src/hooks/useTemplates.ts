@@ -13,20 +13,15 @@ const sanitizeFileName = (name: string) => {
     .replace(/_{2,}/g, "_");
 };
 
-// ─── Preview en background ────────────────────────────────────────────────────
-// Fire-and-forget: no bloquea la UI. Cuando termina, parchea el estado local
-// con la preview_url. Si falla, solo loguea — el usuario no se entera.
 const triggerPreviewGeneration = (
   templateId: string,
   filePath: string,
   onSuccess: (previewUrl: string) => void,
 ) => {
-  // NO usamos 'await' aquí para que el hilo principal siga libre
   fetch("/api/templates/generate-preview", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ templateId, storagePath: filePath }),
-    // Esto es clave: le decimos al navegador que mantenga la conexión viva
     keepalive: true,
   })
     .then(async (res) => {
@@ -35,10 +30,7 @@ const triggerPreviewGeneration = (
       if (previewUrl) onSuccess(previewUrl);
     })
     .catch((err) => {
-      console.warn(
-        "[generate-preview] Error de fondo (Adobe tardó mucho o falló):",
-        err.message,
-      );
+      console.warn("[generate-preview] Error de fondo:", err.message);
     });
 };
 
@@ -52,7 +44,9 @@ export function useTemplates() {
     try {
       const { data, error } = await supabase
         .from("templates")
-        .select("*, company:companies(id, name)")
+        .select(
+          "*, company:companies(id, name), homologation_type:homologation_types(id, name)",
+        ) // ← nuevo join
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -72,22 +66,17 @@ export function useTemplates() {
     fetchTemplates();
   }, [fetchTemplates]);
 
-  // Cambia la función existente por esta:
   const updateTemplateMapping = async (id: string, mapping: any) => {
     try {
-      // Al usar 'any' aquí, permitimos que acepte el objeto complejo MappingField
-      // sin que TypeScript se queje en el build de Vercel.
       const { error } = await supabase
         .from("templates")
         .update({ mapping })
         .eq("id", id);
 
       if (error) {
-        console.error("Error actualizando mapeo en Supabase:", error.message);
+        console.error("Error actualizando mapeo:", error.message);
         throw error;
       }
-
-      // Refrescamos la lista para que la UI tenga los datos nuevos
       await fetchTemplates();
     } catch (err) {
       console.error("Error crítico actualizando mapeo:", err);
@@ -107,16 +96,12 @@ export function useTemplates() {
     const filePath = `uploads/${Date.now()}_${cleanFileName}`;
 
     try {
-      // PASO 1 — Subir el .docx al bucket
       const { error: uploadError } = await supabase.storage
         .from("templates")
         .upload(filePath, file, { cacheControl: "3600", upsert: false });
 
       if (uploadError) {
-        console.error(
-          "Error subiendo archivo al Storage:",
-          uploadError.message,
-        );
+        console.error("Error subiendo archivo:", uploadError.message);
         setUploading(false);
         return;
       }
@@ -125,7 +110,6 @@ export function useTemplates() {
         .from("templates")
         .getPublicUrl(filePath);
 
-      // PASO 2 — Insertar registro (preview_url null por ahora)
       const { data: insertedRows, error: insertError } = await supabase
         .from("templates")
         .insert({
@@ -135,11 +119,14 @@ export function useTemplates() {
           file_name: file.name,
           file_url: urlData.publicUrl,
           company_id: form.company_id || null,
+          homologation_type_id: form.homologation_type_id || null, // ← nuevo
           active: true,
           mapping: {},
-          preview_url: null, // se llenará en background
+          preview_url: null,
         })
-        .select("*, company:companies(id, name)")
+        .select(
+          "*, company:companies(id, name), homologation_type:homologation_types(id, name)",
+        )
         .single();
 
       if (insertError) {
@@ -149,13 +136,10 @@ export function useTemplates() {
         return;
       }
 
-      // PASO 3 — Refrescar lista y cerrar modal (el usuario ya ve su plantilla)
       await fetchTemplates();
       onDone();
       setUploading(false);
 
-      // PASO 4 — Lanzar conversión a PDF en background (sin await)
-      // Cuando termina, actualiza solo ese template en el estado local
       triggerPreviewGeneration(insertedRows.id, filePath, (previewUrl) => {
         setTemplates((prev) =>
           prev.map((t) =>
@@ -172,16 +156,30 @@ export function useTemplates() {
   const deleteTemplate = async (id: string, filePath: string) => {
     try {
       await deleteTemplateFile(filePath);
-
-      // Borrar también el preview del storage si existe
       await supabase.storage.from("templates").remove([`previews/${id}.pdf`]);
-
       const { error } = await supabase.from("templates").delete().eq("id", id);
       if (error) console.error("Error eliminando:", error.message);
       await fetchTemplates();
     } catch (err) {
       console.error("Error en eliminación:", err);
     }
+  };
+
+  // ← nuevo: actualizar solo el tipo de homologación
+  const updateTemplateHomologationType = async (
+    id: string,
+    homologation_type_id: string | null,
+  ) => {
+    const { error } = await supabase
+      .from("templates")
+      .update({ homologation_type_id: homologation_type_id || null })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error actualizando tipo de homologación:", error.message);
+      throw error;
+    }
+    await fetchTemplates();
   };
 
   return {
@@ -191,5 +189,6 @@ export function useTemplates() {
     uploadTemplate,
     deleteTemplate,
     updateTemplateMapping,
+    updateTemplateHomologationType, // ← nuevo
   };
 }
