@@ -220,7 +220,7 @@ export default function TemplatesPage() {
                     onMappingClick={(t) => setSelectedTemplateForMapping(t)}
                     onEditClick={(t) => setTemplateToEdit(t)}
                     onPreviewClick={handleOpenPreview}
-                    onHomologationClick={openHomologationModal} // ← nuevo prop
+                    onHomologationClick={openHomologationModal}
                   />
                 ))
               )}
@@ -261,7 +261,7 @@ export default function TemplatesPage() {
         isMapped={true}
       />
 
-      {/* MODAL: TIPO DE HOMOLOGACIÓN ← NUEVO */}
+      {/* MODAL: TIPO DE HOMOLOGACIÓN */}
       {templateForHomologation && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[28px] shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in zoom-in-95">
@@ -358,7 +358,7 @@ export default function TemplatesPage() {
                     />
                   </div>
 
-                  {/* ← NUEVO: Tipo de homologación */}
+                  {/* Tipo de homologación */}
                   <div>
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
                       Tipo de homologación
