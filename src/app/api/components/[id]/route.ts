@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> }, // ← Corregido: Ahora se tipa como Promise
 ) {
   const cookieStore = await cookies();
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
@@ -17,10 +17,13 @@ export async function GET(
     return NextResponse.json({ error: "No autenticado." }, { status: 401 });
   }
 
+  // Resolver la promesa de params antes de usar sus propiedades
+  const resolvedParams = await params;
+
   const { data, error } = await supabase
     .from("cad_blocks")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", resolvedParams.id) // ← Corregido: Usamos resolvedParams
     .eq("user_id", user.id)
     .single();
 
