@@ -16,5 +16,6 @@ export const MENU_ITEMS = [
   { name: "Empresas", href: "/empresas", icon: Building2 },
   { name: "Actividad", href: "/actividad", icon: History },
   { name: "Homologaciones", href: "/homologaciones", icon: History },
-  { name: "bloques-cad", href: "/bloques-cad", icon: Layers }, // ← NUEVO
+  { name: "bloques-cad", href: "/bloques-cad", icon: Layers },
+  { name: "Historial de Gestión", href: "/gestion", icon: Layers },
 ];

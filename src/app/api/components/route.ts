@@ -47,9 +47,9 @@ export async function GET(req: NextRequest) {
     if (id) {
       const { data, error } = await supabase
         .from("cad_blocks")
-        .select("*") // Traemos TODO, incluyendo raw_vector_data
+        .select("raw_vector_data") // solo lo que necesitas
         .eq("id", id)
-        .eq("user_id", user.id)
+        // .eq("user_id", user.id)  <-- QUITA ESTA LÍNEA
         .single();
 
       if (error)
@@ -59,13 +59,13 @@ export async function GET(req: NextRequest) {
 
     // CASO B: Listado general (Para la tabla/galería)
     const q = searchParams.get("q");
+    // CASO B: Listado general - SIN filtro por user_id
     let query = supabase
       .from("cad_blocks")
       .select(
         "id, name, description, source_format, tags, thumbnail_svg, created_at",
-      ) // Aquí puedes omitir el vector para que sea rápido
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
+      )
+      .order("created_at", { ascending: false }); // <-- removido el .eq("user_id", user.id)
 
     if (q) query = query.ilike("name", `%${q}%`);
 
@@ -134,17 +134,17 @@ export async function DELETE(req: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Sigue pidiendo que estén logueados, pero ya no importa quién lo creó
   if (!user) return NextResponse.json({ error: "No auth" }, { status: 401 });
 
   const id = new URL(req.url).searchParams.get("id");
-  const { error } = await supabase
-    .from("cad_blocks")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
+
+  const { error } = await supabase.from("cad_blocks").delete().eq("id", id); // <--- Ahora solo busca por el ID del archivo
 
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
+
   return NextResponse.json({ success: true });
 }
 
