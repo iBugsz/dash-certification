@@ -17,7 +17,8 @@ export function useHomologationTypes() {
     setLoading(true);
     const { data } = await supabase
       .from("homologation_types")
-      .select("id, name, description, active, created_at, updated_at")
+      // CORREGIDO: Añadimos 'icon' a la selección para que coincida con el tipo HomologationType
+      .select("id, name, description, icon, active, created_at, updated_at")
       .order("created_at", { ascending: false });
     setHomologationTypes(data ?? []);
     setLoading(false);
@@ -37,7 +38,7 @@ export function useHomologationTypes() {
     const payload = {
       name: form.name.trim(),
       description: form.description.trim() || null,
-      icon: form.icon || "FileQuestion", // ← nuevo
+      icon: form.icon || "FileQuestion",
     };
 
     if (editing) {
