@@ -8,6 +8,7 @@ import {
   Download,
   Eye,
   Loader2,
+  Tag, // ← Importamos el icono para homologación
 } from "lucide-react";
 import { Template } from "@/lib/types/database";
 import { formatDate } from "@/lib/utils";
@@ -17,8 +18,8 @@ interface Props {
   onDelete: (id: string, filePath: string) => void;
   onMappingClick: (template: Template) => void;
   onEditClick: (template: Template) => void;
-  // Nueva prop para manejar la vista previa en el modal
   onPreviewClick: (url: string) => void;
+  onHomologationClick: (template: Template) => void; // ← 1. AGREGADO EN LA INTERFAZ
 }
 
 export default function TemplateRow({
@@ -27,6 +28,7 @@ export default function TemplateRow({
   onMappingClick,
   onEditClick,
   onPreviewClick,
+  onHomologationClick, // ← 2. RECIBIDO EN LOS PROPS
 }: Props) {
   return (
     <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors group">
@@ -36,7 +38,6 @@ export default function TemplateRow({
             <FileText className="w-4 h-4 text-blue-500 dark:text-blue-400" />
           </div>
 
-          {/* Al hacer clic aquí, ahora abre el modal en vez de una pestaña nueva */}
           <div
             className="cursor-pointer"
             onClick={() =>
@@ -75,7 +76,6 @@ export default function TemplateRow({
 
       <td className="px-6 py-4">
         <div className="flex justify-end gap-1">
-          {/* BOTÓN DE VISTA PREVIA ACTUALIZADO A BUTTON */}
           {template.has_preview ? (
             <button
               onClick={() => onPreviewClick(template.preview_url!)}
@@ -96,6 +96,15 @@ export default function TemplateRow({
             className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-xl transition-all cursor-pointer"
           >
             <Pencil className="w-4 h-4" />
+          </button>
+
+          {/* 3. BOTÓN DE HOMOLOGACIÓN EN TU FILA DE ACCIONES */}
+          <button
+            onClick={() => onHomologationClick(template)}
+            className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-xl transition-all cursor-pointer"
+            title="Homologación"
+          >
+            <Tag className="w-4 h-4" />
           </button>
 
           <button
