@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { ChevronRight, ChevronLeft, UploadCloud, FileSpreadsheet, FileText, Code } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function DataExtractionPage() {
-  // Valores estáticos solo para renderizar la maquetación visual
-  const currentStep = 1; 
+  // Se usa useState para que TypeScript entienda que el valor puede cambiar
+  const [currentStep, setCurrentStep] = useState(1); 
 
   return (
     <div
@@ -71,7 +72,7 @@ export default function DataExtractionPage() {
           </div>
         )}
 
-        {/* VISTA DEL PASO 2: CARGA MASIVA DE IMÁGENES (Descomentar para previsualizar) */}
+        {/* VISTA DEL PASO 2: CARGA MASIVA DE IMÁGENES */}
         {currentStep === 2 && (
           <div className="animate-in fade-in duration-500 space-y-10">
             <div className="text-center">
@@ -94,7 +95,7 @@ export default function DataExtractionPage() {
           </div>
         )}
 
-        {/* VISTA DEL PASO 3: EXTRACCIÓN EXITOSA Y EXPORTACIONES (Descomentar para previsualizar) */}
+        {/* VISTA DEL PASO 3: EXTRACCIÓN EXITOSA Y EXPORTACIONES */}
         {currentStep === 3 && (
           <div className="animate-in fade-in duration-500 text-center space-y-10 py-6">
             <div>
@@ -107,7 +108,7 @@ export default function DataExtractionPage() {
               </p>
             </div>
 
-            {/* Opciones de descarga en base a tus requerimientos */}
+            {/* Opciones de descarga */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
               <Button variant="outline" className="p-8 rounded-2xl flex flex-col gap-2 h-auto text-center border-emerald-500/20 hover:bg-emerald-500/5">
                 <FileSpreadsheet className="w-6 h-6 text-emerald-500" />
@@ -129,7 +130,7 @@ export default function DataExtractionPage() {
             </div>
 
             <div className="pt-6">
-              <Button variant="link" className="opacity-60 text-sm">
+              <Button variant="link" className="opacity-60 text-sm" onClick={() => setCurrentStep(1)}>
                 Procesar nuevos documentos
               </Button>
             </div>
@@ -144,12 +145,14 @@ export default function DataExtractionPage() {
           <Button
             variant="ghost"
             disabled={currentStep === 1}
+            onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 1))}
             className="rounded-xl font-bold opacity-60 cursor-pointer"
           >
             <ChevronLeft className="mr-2 w-4 h-4" /> Atrás
           </Button>
 
           <Button
+            onClick={() => setCurrentStep((prev) => Math.min(prev + 1, 3))}
             className="px-10 py-6 rounded-2xl font-black text-white shadow-xl active:scale-95 transition-all cursor-pointer"
             style={{ backgroundColor: "var(--accent)" }}
           >
