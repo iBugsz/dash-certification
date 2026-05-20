@@ -5,17 +5,20 @@ import {
   FileText,
   Building2,
   Book,
-  Layers, // ← ícono para Bloques CAD
+  Layers,
+  ScanText,
+  ClipboardList,
 } from "lucide-react";
 
 export const MENU_ITEMS = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Certificados", href: "/certificados", icon: FileStack },
+  { name: "Extracción IA", href: "/extraccion-datos", icon: ScanText },
   { name: "Catálogos", href: "/catalogos", icon: Book },
   { name: "Plantillas", href: "/plantillas", icon: FileText },
   { name: "Empresas", href: "/empresas", icon: Building2 },
   { name: "Actividad", href: "/actividad", icon: History },
   { name: "Homologaciones", href: "/homologaciones", icon: History },
-  { name: "bloques-cad", href: "/bloques-cad", icon: Layers },
-  { name: "Historial de Gestión", href: "/gestion", icon: Layers },
+  { name: "Bloques CAD", href: "/bloques-cad", icon: Layers },
+  { name: "Historial de Gestión", href: "/gestion", icon: ClipboardList },
 ];

@@ -39,14 +39,17 @@ export function useTemplates() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
 
-  const fetchTemplates = useCallback(async () => {
-    setLoading(true);
+  // Cambia tu función fetchTemplates por esta:
+  const fetchTemplates = useCallback(async (isSilent = false) => {
+    // Solo activamos el loading si NO es un refresco silencioso
+    if (!isSilent) setLoading(true);
+
     try {
       const { data, error } = await supabase
         .from("templates")
         .select(
           "*, company:companies(id, name), homologation_type:homologation_types(id, name)",
-        ) // ← nuevo join
+        )
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -58,12 +61,63 @@ export function useTemplates() {
     } catch (err) {
       console.error("Error inesperado en fetch:", err);
     } finally {
-      setLoading(false);
+      // Solo apagamos el loading si lo encendimos antes
+      if (!isSilent) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     fetchTemplates();
+  }, [fetchTemplates]);
+
+  // ==========================================
+  // ESCUCHAR CAMBIOS EN TIEMPO REAL (REALTIME)
+  // ==========================================
+  // En tu hook useTemplates(), busca el useEffect de Realtime:
+  useEffect(() => {
+    const channel = supabase
+      .channel("templates-realtime-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*", // Escucha INSERT, UPDATE y DELETE
+          schema: "public",
+          table: "templates",
+        },
+        async (payload) => {
+          console.log("Cambio en tiempo real recibido:", payload);
+
+          if (payload.eventType === "INSERT") {
+            // Refresco silencioso: agrega la nueva tarjeta con sus relaciones
+            // en segundo plano sin activar los esqueletos de carga
+            fetchTemplates(true);
+          } else if (payload.eventType === "UPDATE") {
+            const updatedRow = payload.new as Template;
+
+            // 1. Actualiza campos planos (como el nombre) al instante en milisegundos
+            setTemplates((prevTemplates) =>
+              prevTemplates.map((template) =>
+                template.id === updatedRow.id
+                  ? { ...template, ...updatedRow }
+                  : template,
+              ),
+            );
+
+            // 2. Trae las relaciones (empresa/homologación) de manera silenciosa
+            fetchTemplates(true);
+          } else if (payload.eventType === "DELETE") {
+            const deletedRow = payload.old;
+            setTemplates((prevTemplates) =>
+              prevTemplates.filter((template) => template.id !== deletedRow.id),
+            );
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [fetchTemplates]);
 
   const updateTemplateMapping = async (id: string, mapping: any) => {
@@ -77,6 +131,8 @@ export function useTemplates() {
         console.error("Error actualizando mapeo:", error.message);
         throw error;
       }
+      // Ya no es estrictamente obligatorio refrescar a mano si Realtime está activo,
+      // pero lo dejamos por seguridad.
       await fetchTemplates();
     } catch (err) {
       console.error("Error crítico actualizando mapeo:", err);
@@ -119,7 +175,7 @@ export function useTemplates() {
           file_name: file.name,
           file_url: urlData.publicUrl,
           company_id: form.company_id || null,
-          homologation_type_id: form.homologation_type_id || null, // ← nuevo
+          homologation_type_id: form.homologation_type_id || null,
           active: true,
           mapping: {},
           preview_url: null,
@@ -136,7 +192,6 @@ export function useTemplates() {
         return;
       }
 
-      await fetchTemplates();
       onDone();
       setUploading(false);
 
@@ -159,13 +214,11 @@ export function useTemplates() {
       await supabase.storage.from("templates").remove([`previews/${id}.pdf`]);
       const { error } = await supabase.from("templates").delete().eq("id", id);
       if (error) console.error("Error eliminando:", error.message);
-      await fetchTemplates();
     } catch (err) {
       console.error("Error en eliminación:", err);
     }
   };
 
-  // ← nuevo: actualizar solo el tipo de homologación
   const updateTemplateHomologationType = async (
     id: string,
     homologation_type_id: string | null,
@@ -179,7 +232,6 @@ export function useTemplates() {
       console.error("Error actualizando tipo de homologación:", error.message);
       throw error;
     }
-    await fetchTemplates();
   };
 
   return {
@@ -189,6 +241,7 @@ export function useTemplates() {
     uploadTemplate,
     deleteTemplate,
     updateTemplateMapping,
-    updateTemplateHomologationType, // ← nuevo
+    updateTemplateHomologationType,
+    fetchTemplates,
   };
 }
