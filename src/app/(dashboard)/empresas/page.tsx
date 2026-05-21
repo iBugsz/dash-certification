@@ -14,7 +14,6 @@ import { useCompanies } from "@/hooks/useCompanies";
 import CompanyCard from "@/components/features/companies/CompanyCard";
 import CompanyCardSkeleton from "@/components/features/companies/CompanyCardSkeleton";
 import CompanyModal from "@/components/features/companies/CompanyModal";
-import { formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
