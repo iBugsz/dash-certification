@@ -10,6 +10,7 @@ export interface Company {
   nit: string | null;
   active: boolean;
   created_at: string;
+  updated_at: string; // ← agrega esto
 }
 
 export interface CompanyFormData {
