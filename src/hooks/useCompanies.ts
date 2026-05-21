@@ -13,7 +13,10 @@ export function useCompanies() {
     setLoading(true);
     const { data } = await supabase
       .from("companies")
-      .select("id, name, email, phone, logo_url, nit, active, created_at")
+      /* AGREGADO ', updated_at' AL FINAL DEL SELECT */
+      .select(
+        "id, name, email, phone, logo_url, nit, active, created_at, updated_at",
+      )
       .order("created_at", { ascending: false });
     setCompanies(data ?? []);
     setLoading(false);
