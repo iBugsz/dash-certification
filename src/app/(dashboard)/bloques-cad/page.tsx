@@ -196,7 +196,11 @@ export default function BloquesCadPage() {
           {filteredBlocks.map((b) => (
             <BlockCard
               key={b.id}
-              block={b}
+              block={{
+                ...b,
+                user_id: b.user_id ?? null,
+                raw_vector_data: b.raw_vector_data ?? null,
+              } as CADBlock}
               collections={collections}
               onCopy={handleCopy}
               onDelete={handleDelete}
