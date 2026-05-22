@@ -3,6 +3,8 @@
 
 import { useState, useCallback } from "react";
 import { createBrowserClient } from "@supabase/ssr";
+// 1. Importamos el tipo global para mantener la consistencia
+import { CADBlock } from "@/lib/types/database";
 
 // Inicializamos el cliente del lado del cliente (browser)
 const supabase = createBrowserClient(
@@ -10,24 +12,29 @@ const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 );
 
-export interface CadBlock {
+// 2. Extendemos el tipo de la base de datos asegurando compatibilidad total
+// Hacemos que user_id y raw_vector_data sean opcionales en el estado local
+// porque se cargan bajo demanda o son manejados por el backend.
+export interface ClientCadBlock extends Partial<CADBlock> {
   id: string;
   name: string;
   description: string | null;
   source_format: string;
-  tags?: string[]; // Opcional por ahora en el front si no existe en BD
   thumbnail_svg: string | null;
   collection_id: string | null;
-  created_at?: string;
-  updated_at?: string;
+  created_at: string;
+  updated_at: string;
+  user_id?: string;
+  raw_vector_data?: string;
 }
 
 export function useCadBlocks() {
-  const [blocks, setBlocks] = useState<CadBlock[]>([]);
+  // 3. Usamos la interfaz unificada para el estado
+  const [blocks, setBlocks] = useState<ClientCadBlock[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // A. Obtener listado general (Quitamos 'tags' de la consulta de Supabase)
+  // A. Obtener listado general (Sin 'tags' ni 'raw_vector_data' por rendimiento)
   const fetchBlocks = useCallback(async (searchQuery?: string) => {
     setLoading(true);
     setError(null);
@@ -35,7 +42,7 @@ export function useCadBlocks() {
       let query = supabase
         .from("cad_blocks")
         .select(
-          "id, name, description, source_format, thumbnail_svg, created_at, updated_at, collection_id", // 👈 'tags' removido de aquí
+          "id, name, description, source_format, thumbnail_svg, created_at, updated_at, collection_id",
         )
         .order("created_at", { ascending: false });
 
@@ -46,7 +53,7 @@ export function useCadBlocks() {
       const { data, error: dbError } = await query;
 
       if (dbError) throw dbError;
-      setBlocks(data || []);
+      setBlocks((data as ClientCadBlock[]) || []);
     } catch (err: any) {
       setError(err.message || "Error al cargar los bloques");
     } finally {
@@ -54,9 +61,13 @@ export function useCadBlocks() {
     }
   }, []);
 
-  // B. Crear un nuevo bloque (Quitamos 'tags' del objeto de inserción)
+  // B. Crear un nuevo bloque
   const createBlock = useCallback(
-    async (newBlock: Omit<CadBlock, "id"> & { raw_vector_data: string }) => {
+    async (
+      newBlock: Omit<ClientCadBlock, "id" | "created_at" | "updated_at"> & {
+        raw_vector_data: string;
+      },
+    ) => {
       setLoading(true);
       setError(null);
       try {
@@ -75,17 +86,16 @@ export function useCadBlocks() {
             source_format: newBlock.source_format || "dxf",
             thumbnail_svg: newBlock.thumbnail_svg || null,
             collection_id: newBlock.collection_id || null,
-            // 👈 'tags' removido de aquí para evitar el error de columna inexistente
           })
           .select(
             "id, name, description, source_format, thumbnail_svg, created_at, updated_at, collection_id",
-          ) // Aseguramos no pedir tags de vuelta
+          )
           .single();
 
         if (dbError) throw dbError;
 
-        setBlocks((prev) => [data, ...prev]);
-        return data;
+        setBlocks((prev) => [data as ClientCadBlock, ...prev]);
+        return data as ClientCadBlock;
       } catch (err: any) {
         setError(err.message || "Error al crear el bloque");
         return null;
@@ -96,7 +106,7 @@ export function useCadBlocks() {
     [],
   );
 
-  // C. Consultar un solo vector pesado bajo demanda (Requerido por BlockPreviewModal y handleCopy)
+  // C. Consultar un solo vector pesado bajo demanda
   const fetchSingleBlockVector = useCallback(async (id: string) => {
     setError(null);
     try {
@@ -136,13 +146,12 @@ export function useCadBlocks() {
     }
   }, []);
 
-  // E. Actualizar un bloque (PATCH - Excluyendo también 'tags' del retorno)
-  const updateBlock = async (id: string, updates: Partial<CadBlock>) => {
+  // E. Actualizar un bloque (PATCH)
+  const updateBlock = async (id: string, updates: Partial<ClientCadBlock>) => {
     setLoading(true);
     setError(null);
     try {
-      // Evitamos enviar tags si por error viene en los updates
-      const { tags, ...cleanUpdates } = updates as any;
+      const { ...cleanUpdates } = updates as any;
 
       const { data, error: dbError } = await supabase
         .from("cad_blocks")
@@ -155,8 +164,10 @@ export function useCadBlocks() {
 
       if (dbError) throw dbError;
 
-      setBlocks((prev) => prev.map((b) => (b.id === id ? data : b)));
-      return data;
+      setBlocks((prev) =>
+        prev.map((b) => (b.id === id ? (data as ClientCadBlock) : b)),
+      );
+      return data as ClientCadBlock;
     } catch (err: any) {
       setError(err.message || "Error al actualizar el bloque");
       return null;
