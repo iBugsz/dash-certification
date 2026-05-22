@@ -50,11 +50,12 @@ export default function NewBlockModal({ collections, onClose, onSaved }: NewBloc
 
       const success = await createBlock({
         name: name.trim() || "Sin nombre",
+        description: null,
         raw_vector_data: capturedData.raw,
         source_format: capturedData.format,
         thumbnail_svg: svgString,
         collection_id: collectionId || null,
-        tags: [], 
+        
       });
 
       if (!success) {
