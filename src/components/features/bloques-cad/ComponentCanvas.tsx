@@ -137,7 +137,7 @@ function computeFitTransform(
   entities: CADEntity[],
   canvasW: number,
   canvasH: number,
-  padding = 0.82,
+  padding = 0.75, // 👈 Ajustado ligeramente a 0.75 para dar más aire perimetral estético
 ) {
   const { min, max } = getBounds(entities);
   const dw = max.x - min.x || 1;
@@ -166,6 +166,7 @@ export default function ComponentCanvas({
   const [entities, setEntities] = useState<CADEntity[]>([]);
   const isDragging = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
+  const hasInitialFit = useRef(false); // 👈 Bandera de control para evitar bucles y forzar el centrado inicial
 
   // ── Dibujo ────────────────────────────────────────────────────────────────
   const draw = useCallback(() => {
@@ -292,7 +293,7 @@ export default function ComponentCanvas({
     setTransform(computeFitTransform(entities, canvas.width, canvas.height));
   }, [entities]);
 
-  // ── Resize observer: ajusta canvas al contenedor real ────────────────────
+  // ── Resize observer: Ajusta canvas y fuerza el centrado matemático exacto ──
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -300,25 +301,38 @@ export default function ComponentCanvas({
       const canvas = canvasRef.current;
       if (!canvas) return;
       const { width, height: h } = container.getBoundingClientRect();
-      canvas.width = width * window.devicePixelRatio;
-      canvas.height = h * window.devicePixelRatio;
+      
+      const targetW = width * window.devicePixelRatio;
+      const targetH = h * window.devicePixelRatio;
+
+      canvas.width = targetW;
+      canvas.height = targetH;
       canvas.style.width = `${width}px`;
       canvas.style.height = `${h}px`;
-      draw();
+      
+      // 👇 REPARACIÓN CLAVE: Si ya tenemos entidades mapeadas y no se ha centrado inicialmente,
+      // calculamos el transform usando las dimensiones reales finales de renderizado.
+      if (entities.length > 0 && !hasInitialFit.current) {
+        setTransform(computeFitTransform(entities, targetW, targetH));
+        hasInitialFit.current = true;
+      } else {
+        draw();
+      }
     });
     ro.observe(container);
     return () => ro.disconnect();
-  }, [draw]);
+  }, [draw, entities]);
 
   // ── Parseo de datos ───────────────────────────────────────────────────────
   useEffect(() => {
-    if (!rawVectorData) { setEntities([]); return; }
+    if (!rawVectorData) { 
+      setEntities([]); 
+      hasInitialFit.current = false;
+      return; 
+    }
     const ents = parseCFText(rawVectorData);
     setEntities(ents);
-    const canvas = canvasRef.current;
-    if (canvas && ents.length > 0) {
-      setTransform(computeFitTransform(ents, canvas.width, canvas.height));
-    }
+    hasInitialFit.current = false; // Reseteamos la bandera para recalcular el centro con la nueva geometría
   }, [rawVectorData]);
 
   useEffect(() => { draw(); }, [draw]);

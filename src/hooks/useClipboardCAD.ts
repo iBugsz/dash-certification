@@ -18,52 +18,82 @@ export interface CADClipboardData {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/**
- * Detecta el formato del contenido pegado.
- * AutoCAD en Windows genera CF_TEXT que empieza con cabeceras DXF o con
- * identificadores propietarios como "AC" seguido de versión.
- */
 function detectFormat(text: string): ClipboardFormat {
   const trimmed = text.trimStart();
 
-  // DXF clásico: secciones HEADER / ENTITIES / EOF
   if (trimmed.includes("SECTION") && trimmed.includes("ENTITIES")) {
     return "dxf";
   }
-  // AutoCAD CF_TEXT suele tener líneas numéricas pareadas (código + valor)
   if (/^\s*\d+\s*\n/.test(trimmed)) {
     return "cf_text";
   }
-  // Formato binario representado como texto (cabecera AC)
   if (trimmed.startsWith("AC")) {
     return "acad_entities";
   }
   return "unknown";
 }
 
+/**
+ * Convierte un bloque DXF R12 crudo en una secuencia de comandos ejecutables (Macro)
+ * para que la consola de comandos de AutoCAD la dibuje directamente al hacer Ctrl+V.
+ */
+function convertDXFToAutoCADMacro(dxfText: string): string {
+  const lines = dxfText.split(/\r?\n/).map((l) => l.trim());
+  let macro = "";
+  let i = 0;
+
+  // Desactivamos temporalmente el emboquillado de objetos (OSNAP) para evitar distorsiones
+  macro += "OSMODE\n0\n";
+
+  while (i < lines.length) {
+    if (lines[i] === "LINE") {
+      let x1 = "0",
+        y1 = "0",
+        x2 = "0",
+        y2 = "0";
+      while (i < lines.length && lines[i] !== "0") {
+        if (lines[i] === "10") x1 = lines[i + 1];
+        if (lines[i] === "20") y1 = lines[i + 1];
+        if (lines[i] === "11") x2 = lines[i + 1];
+        if (lines[i] === "21") y2 = lines[i + 1];
+        i++;
+      }
+      macro += `_LINE\n${x1},${y1}\n${x2},${y2}\n\n`;
+    } else if (lines[i] === "CIRCLE") {
+      let cx = "0",
+        cy = "0",
+        r = "0";
+      while (i < lines.length && lines[i] !== "0") {
+        if (lines[i] === "10") cx = lines[i + 1];
+        if (lines[i] === "20") cy = lines[i + 1];
+        if (lines[i] === "40") r = lines[i + 1];
+        i++;
+      }
+      macro += `_CIRCLE\n${cx},${cy}\n${r}\n`;
+    } else {
+      i++;
+    }
+  }
+
+  // Devolvemos el estado original al cursor del usuario o cerramos el buffer de comandos
+  macro += "PRINC\n";
+  return macro;
+}
+
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 interface UseClipboardCADOptions {
-  /** Llamado cuando se detecta datos válidos de AutoCAD en el portapapeles */
   onCapture?: (data: CADClipboardData) => void;
-  /** Si es true, el hook escucha eventos paste globalmente */
   listenGlobal?: boolean;
 }
 
 interface UseClipboardCADReturn {
-  /** Datos capturados del último paste */
   capturedData: CADClipboardData | null;
-  /** true mientras se lee el portapapeles */
   isReading: boolean;
-  /** true mientras se escribe al portapapeles */
   isWriting: boolean;
-  /** Error ocurrido, si hubo */
   error: string | null;
-  /** Fuerza lectura manual del portapapeles (sin paste event) */
   readClipboard: () => Promise<CADClipboardData | null>;
-  /** Inyecta el raw_vector_data de vuelta al portapapeles del SO */
   writeToClipboard: (rawData: string) => Promise<boolean>;
-  /** Limpia el estado */
   reset: () => void;
 }
 
@@ -79,13 +109,11 @@ export function useClipboardCAD(
   const [isWriting, setIsWriting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Ref para evitar closures viejas en el event listener
   const onCaptureRef = useRef(onCapture);
   useEffect(() => {
     onCaptureRef.current = onCapture;
   }, [onCapture]);
 
-  // ── Procesar texto crudo ──────────────────────────────────────────────────
   const processRawText = useCallback((text: string): CADClipboardData => {
     const data: CADClipboardData = {
       raw: text,
@@ -97,13 +125,11 @@ export function useClipboardCAD(
     return data;
   }, []);
 
-  // ── Leer portapapeles manualmente ─────────────────────────────────────────
   const readClipboard =
     useCallback(async (): Promise<CADClipboardData | null> => {
       setIsReading(true);
       setError(null);
       try {
-        // La Clipboard API requiere permiso "clipboard-read" en algunos browsers
         const text = await navigator.clipboard.readText();
         if (!text.trim()) {
           setError("El portapapeles está vacío.");
@@ -115,26 +141,31 @@ export function useClipboardCAD(
         setError(msg);
         return null;
       } finally {
+        // 👈 Aquí estaba el error, simplemente cámbialo a 'finally'
         setIsReading(false);
       }
     }, [processRawText]);
 
-  // ── Escribir al portapapeles (inyectar de vuelta a AutoCAD) ───────────────
   const writeToClipboard = useCallback(
     async (rawData: string): Promise<boolean> => {
       setIsWriting(true);
       setError(null);
       try {
-        await navigator.clipboard.writeText(rawData);
+        // MÁGICO: Si es un DXF nativo, lo transformamos en comando directo de consola antes de copiarlo
+        const isDXF =
+          rawData.includes("SECTION") && rawData.includes("ENTITIES");
+        const dataToPut = isDXF ? convertDXFToAutoCADMacro(rawData) : rawData;
+
+        await navigator.clipboard.writeText(dataToPut);
         return true;
       } catch (err: any) {
-        /**
-         * Algunos navegadores (especialmente sin HTTPS o sin foco de ventana)
-         * bloquean la escritura al portapapeles. Fallback con execCommand.
-         */
         try {
+          const isDXF =
+            rawData.includes("SECTION") && rawData.includes("ENTITIES");
+          const dataToPut = isDXF ? convertDXFToAutoCADMacro(rawData) : rawData;
+
           const ta = document.createElement("textarea");
-          ta.value = rawData;
+          ta.value = dataToPut;
           ta.style.position = "fixed";
           ta.style.opacity = "0";
           document.body.appendChild(ta);
@@ -154,12 +185,10 @@ export function useClipboardCAD(
     [],
   );
 
-  // ── Escucha global de paste ───────────────────────────────────────────────
   useEffect(() => {
     if (!listenGlobal) return;
 
     const handlePaste = (e: ClipboardEvent) => {
-      // Ignorar pastes dentro de inputs / textareas para no interferir
       const target = e.target as HTMLElement;
       if (
         target.tagName === "INPUT" ||
@@ -172,7 +201,7 @@ export function useClipboardCAD(
       const text = e.clipboardData?.getData("text/plain") ?? "";
       if (!text.trim()) return;
 
-      e.preventDefault(); // Evitar que el texto aparezca en el DOM
+      e.preventDefault();
       processRawText(text);
     };
 
@@ -180,7 +209,6 @@ export function useClipboardCAD(
     return () => window.removeEventListener("paste", handlePaste);
   }, [listenGlobal, processRawText]);
 
-  // ── Reset ─────────────────────────────────────────────────────────────────
   const reset = useCallback(() => {
     setCapturedData(null);
     setError(null);

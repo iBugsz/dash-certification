@@ -89,3 +89,24 @@ export const EMPTY_HOMOLOGATION_FORM: HomologationTypeFormData = {
   description: "",
   icon: "FileQuestion", // ← nuevo
 };
+
+export interface Collection {
+  id: string;
+  name: string;
+  user_id?: string;
+  created_at?: string;
+}
+
+export interface CADBlock {
+  id: string; // uuid gen_random_uuid()
+  user_id: string | null; // uuid
+  name: string; // text ('Sin nombre'::text)
+  description: string | null; // text
+  raw_vector_data: string | null; // text
+  source_format: string; // text ('unknown'::text)
+  tags: string[]; // text[] ('{}'::text[])
+  thumbnail_svg: string | null; // text
+  collection_id?: string | null; // El enlace a tu nueva tabla de colecciones
+  created_at: string; // timestamptz (now())
+  updated_at: string; // timestamptz (now())
+}
