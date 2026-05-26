@@ -111,7 +111,7 @@ export interface CADBlock {
   updated_at: string; // timestamptz (now())
 }
 
-export type FieldType = "text" | "number" | "image"; // Asegúrate de que esto sea exactamente así
+export type FieldType = "text" | "number" | "image";
 
 export interface MappingField {
   type: FieldType;
