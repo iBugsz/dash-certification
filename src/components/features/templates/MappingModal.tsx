@@ -90,21 +90,32 @@ function TypeToggle({ value, onChange }: { value: FieldType; onChange: (v: Field
 // ─── FormatList ───────────────────────────────────────────────────────────────
 function FormatList({ field, onUpdate, onClose }: { field: MappingField; onUpdate: (f: Partial<FieldFormat>) => void; onClose: () => void }) {
   
-  // Función auxiliar para activar decimales
-  const activateDecimals = () => {
-    // Si ya está en modo decimal, no hacemos nada, si no, lo inicializamos en 1
-    if (!field.format?.case?.startsWith("decimal:")) {
-      onUpdate({ case: "decimal:1" });
-    }
-  };
-
   return (
-    <div className="mt-2.5 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-      {/* ... (Sección de texto igual que antes) ... */}
+    <div className="mt-2.5 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-900">
+      
+      {/* Opciones para Texto */}
+      {field.type === "text" && (
+        <div className="divide-y divide-slate-100 dark:divide-slate-700">
+          {CASE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => { onUpdate({ case: opt.value }); onClose(); }}
+              className={`w-full flex items-center justify-between px-3 py-2 text-xs transition-colors ${
+                field.format?.case === opt.value 
+                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-medium" 
+                  : "hover:bg-slate-50 dark:hover:bg-slate-800"
+              }`}
+            >
+              <span>{opt.label}</span>
+              <span className="text-[10px] text-slate-400 font-mono">{opt.example}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
+      {/* Opciones para Número */}
       {field.type === "number" && (
         <div className="divide-y divide-slate-100 dark:divide-slate-700">
-          
           <button
             onClick={() => { onUpdate({ case: "none" }); onClose(); }}
             className={`w-full flex items-center px-3 py-2 text-xs transition-colors ${field.format?.case === "none" ? "bg-amber-50 text-amber-700 font-medium" : "hover:bg-slate-50"}`}
@@ -112,9 +123,7 @@ function FormatList({ field, onUpdate, onClose }: { field: MappingField; onUpdat
             <span>Sin formato</span>
           </button>
 
-          {/* Fila de Decimales mejorada */}
           <button
-            onClick={activateDecimals}
             className={`w-full flex items-center justify-between px-3 py-2 text-xs transition-colors ${
               field.format?.case?.startsWith("decimal:")
                 ? "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 font-medium"
@@ -122,8 +131,6 @@ function FormatList({ field, onUpdate, onClose }: { field: MappingField; onUpdat
             }`}
           >
             <span>Decimales</span>
-            
-            {/* Si el modo está activo, mostramos los controles. Si no, un indicador de 'seleccionar' */}
             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
               <button
                 type="button"
@@ -133,11 +140,9 @@ function FormatList({ field, onUpdate, onClose }: { field: MappingField; onUpdat
                 }}
                 className="w-5 h-5 flex items-center justify-center rounded border border-slate-200 bg-white hover:bg-slate-100"
               >−</button>
-              
               <span className="w-4 text-center font-mono font-semibold">
                 {field.format?.case?.startsWith("decimal:") ? field.format.case.split(":")[1] : "1"}
               </span>
-
               <button
                 type="button"
                 onClick={() => {

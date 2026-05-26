@@ -110,3 +110,15 @@ export interface CADBlock {
   created_at: string; // timestamptz (now())
   updated_at: string; // timestamptz (now())
 }
+
+export type FieldType = "text" | "number" | "image"; // Asegúrate de que esto sea exactamente así
+
+export interface MappingField {
+  type: FieldType;
+  label: string;
+  sheet?: string;
+  cell?: string;
+  format?: {
+    case?: string;
+  };
+}
