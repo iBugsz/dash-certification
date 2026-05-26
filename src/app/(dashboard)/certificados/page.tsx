@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useCertificates } from "@/hooks/useCertificates";
-import { ChevronRight, ChevronLeft } from "lucide-react";
+import { ChevronRight, ChevronLeft, Tag } from "lucide-react";
 import { CertificateSelectors } from "@/components/features/certificates/CertificateSelectors";
 import { ExcelDropzone } from "@/components/features/certificates/ExcelDropzone";
 import { ImageUploadSection } from "@/components/features/certificates/ImageUploadSection";
@@ -10,11 +10,13 @@ import { PreviewDrawer } from "@/components/features/certificates/PreviewDrawer"
 import { CertificateStepper } from "@/components/features/certificates/CertificateStepper";
 import { ProcessingOverlay } from "@/components/features/certificates/ProcessingOverlay";
 import { Step3Success } from "@/components/features/certificates/Step3Success";
+import { PresetManager } from "@/components/features/templates/PresetManager";
 import { Button } from "@/components/ui/button";
 
 export default function CertificatesPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [showPreview, setShowPreview] = useState(false);
+  const [showPresetManager, setShowPresetManager] = useState(false);
   const [imageFiles, setImageFiles] = useState<Record<string, File>>({});
   const [processingProgress, setProcessingProgress] = useState(0);
   const [step3Revealed, setStep3Revealed] = useState(false);
@@ -132,11 +134,22 @@ export default function CertificatesPage() {
         color: "var(--foreground)",
       }}
     >
-      <CertificateStepper
-        currentStep={currentStep}
-        isProcessing={isProcessing}
-        getStepperWidth={getStepperWidth}
-      />
+      <div className="flex justify-between items-center max-w-4xl mx-auto">
+        <CertificateStepper
+          currentStep={currentStep}
+          isProcessing={isProcessing}
+          getStepperWidth={getStepperWidth}
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowPresetManager(true)}
+          className="gap-2 rounded-xl"
+        >
+          <Tag className="w-4 h-4" />
+          Tags
+        </Button>
+      </div>
 
       <div
         className="rounded-[40px] p-8 md:p-12 shadow-2xl min-h-[520px] max-w-4xl mx-auto relative overflow-hidden transition-colors duration-300 border"
@@ -244,6 +257,10 @@ export default function CertificatesPage() {
         isProcessing={isProcessing}
         isMapped={isMapped}
       />
+
+      {showPresetManager && (
+        <PresetManager onClose={() => setShowPresetManager(false)} />
+      )}
     </div>
   );
 }

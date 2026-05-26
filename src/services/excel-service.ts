@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { applyFormat } from "@/lib/formatters"; // Importamos el formateador
 
 export async function extractExcelData(file: File, mapping: any) {
   const data = await file.arrayBuffer();
@@ -6,9 +7,9 @@ export async function extractExcelData(file: File, mapping: any) {
   const finalData: Record<string, any> = {};
   const missingInExcel: string[] = [];
 
-  // mapping viene de Supabase: { "neme": { "cell": "C4", "sheet": "FTH" } }
+  // mapping viene de Supabase: { "aa": { "cell": "C4", "sheet": "FTH", "format": {...} } }
   for (const variableWord in mapping) {
-    const { cell, sheet: sheetName } = mapping[variableWord];
+    const { cell, sheet: sheetName, format } = mapping[variableWord];
 
     // 1. Intentar acceder a la hoja
     const worksheet = workbook.Sheets[sheetName];
@@ -19,13 +20,16 @@ export async function extractExcelData(file: File, mapping: any) {
       continue;
     }
 
-    // 2. Leer la celda (convertimos a mayúsculas por si acaso viene 'c4')
+    // 2. Leer la celda
     const cellAddress = cell.toUpperCase();
     const desiredCell = worksheet[cellAddress];
 
-    // 3. Extraer valor real
+    // 3. Extraer y formatear valor
     if (desiredCell && desiredCell.v !== undefined) {
-      finalData[variableWord] = desiredCell.v;
+      const rawValue = desiredCell.w || desiredCell.v;
+
+      // Aplicamos el formato definido en Supabase
+      finalData[variableWord] = applyFormat(rawValue, format);
     } else {
       finalData[variableWord] = "";
       missingInExcel.push(`${variableWord} (Celda ${cellAddress} vacía)`);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Plus,
   Search,
@@ -17,9 +17,9 @@ import TemplateRowSkeleton from "@/components/features/templates/TemplateRowSkel
 import TemplateUploadModal from "@/components/features/templates/TemplateUploadModal";
 import MappingModal from "@/components/features/templates/MappingModal";
 import { PreviewDrawer } from "@/components/features/certificates/PreviewDrawer";
+import { PresetManager } from "@/components/features/templates/PresetManager";
 import { Template, MappingField } from "@/lib/types/database";
 import { supabase } from "@/lib/supabase";
-import { useEffect } from "react";
 
 interface SimpleHomologationType {
   id: string;
@@ -39,16 +39,17 @@ export default function TemplatesPage() {
     uploadTemplate,
     deleteTemplate,
     updateTemplateMapping,
-    updateTemplateHomologationType,
   } = useTemplates();
 
   const [showModal, setShowModal] = useState(false);
+  const [showPresetManager, setShowPresetManager] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedTemplateForMapping, setSelectedTemplateForMapping] =
     useState<Template | null>(null);
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedPdfUrl, setSelectedPdfUrl] = useState<string | null>(null);
+  
   const handleOpenPreview = (url: string) => {
     setSelectedPdfUrl(url);
     setIsPreviewOpen(true);
@@ -104,7 +105,7 @@ export default function TemplatesPage() {
     const newCompanyId = formData.get("company_id") as string;
 
     if (templateToEdit && newName) {
-      const { error } = await supabase
+      await supabase
         .from("templates")
         .update({
           name: newName,
@@ -112,12 +113,7 @@ export default function TemplatesPage() {
           company_id: newCompanyId || null,
         })
         .eq("id", templateToEdit.id);
-
-      if (error) {
-        console.error("Error al actualizar:", error.message);
-      }
       
-      // Quitamos la línea de fetchTemplates ya que Realtime se encarga de refrescar
       setTemplateToEdit(null);
     }
   };
@@ -134,13 +130,23 @@ export default function TemplatesPage() {
             Sube y gestiona tus archivos .docx con etiquetas de mapeo.
           </p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all active:scale-95 text-sm"
-        >
-          <Plus className="w-4 h-4" />
-          Subir Plantilla
-        </button>
+        
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowPresetManager(true)}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl font-semibold hover:bg-slate-200 transition-all text-sm"
+          >
+            <Tag className="w-4 h-4" />
+            Gestionar Tags
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all active:scale-95 text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Subir Plantilla
+          </button>
+        </div>
       </div>
 
       {/* Buscador */}
@@ -184,7 +190,9 @@ export default function TemplatesPage() {
         </div>
       )}
 
-      {/* MODAL: SUBIR */}
+      {/* MODALES */}
+      {showPresetManager && <PresetManager onClose={() => setShowPresetManager(false)} />}
+      
       {showModal && (
         <TemplateUploadModal
           uploading={uploading}
@@ -193,21 +201,14 @@ export default function TemplatesPage() {
         />
       )}
 
-      {/* MODAL: MAPEO */}
       {selectedTemplateForMapping && (
         <MappingModal
           template={selectedTemplateForMapping}
           onClose={() => setSelectedTemplateForMapping(null)}
-          onSave={
-            updateTemplateMapping as (
-              id: string,
-              mapping: Record<string, MappingField>,
-            ) => Promise<void>
-          }
+          onSave={updateTemplateMapping as (id: string, mapping: Record<string, MappingField>) => Promise<void>}
         />
       )}
 
-      {/* MODAL: VISTA PREVIA */}
       <PreviewDrawer
         isOpen={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}
@@ -224,94 +225,40 @@ export default function TemplatesPage() {
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-lg font-bold">Editar Plantilla</h3>
-                  <button
-                    type="button"
-                    onClick={() => setTemplateToEdit(null)}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-                  >
+                  <button type="button" onClick={() => setTemplateToEdit(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
                     <X className="w-4 h-4 text-slate-400" />
                   </button>
                 </div>
-
                 <div className="space-y-4">
-                  {/* Nombre */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                      Nombre
-                    </label>
-                    <input
-                      name="name"
-                      type="text"
-                      autoFocus
-                      defaultValue={templateToEdit.name}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
-                    />
+                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Nombre</label>
+                    <input name="name" type="text" autoFocus defaultValue={templateToEdit.name} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" />
                   </div>
-
-                  {/* Empresa */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                      Empresa asignada
-                    </label>
+                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Empresa asignada</label>
                     <div className="relative">
                       <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                      <select
-                        name="company_id"
-                        defaultValue={templateToEdit.company_id ?? ""}
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all appearance-none cursor-pointer"
-                      >
+                      <select name="company_id" defaultValue={templateToEdit.company_id ?? ""} className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all appearance-none cursor-pointer">
                         <option value="">Sin empresa</option>
-                        {companies.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.name}
-                          </option>
-                        ))}
+                        {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                       </select>
                     </div>
                   </div>
-
-                  {/* Tipo de homologación */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                      Tipo de homologación
-                    </label>
+                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Tipo de homologación</label>
                     <div className="relative">
                       <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                      <select
-                        name="homologation_type_id"
-                        defaultValue={templateToEdit.homologation_type_id ?? ""}
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all appearance-none cursor-pointer"
-                      >
+                      <select name="homologation_type_id" defaultValue={templateToEdit.homologation_type_id ?? ""} className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all appearance-none cursor-pointer">
                         <option value="">Sin tipo asignado</option>
-                        {homologationTypes.map((h) => (
-                          <option key={h.id} value={h.id}>
-                            {h.name}
-                          </option>
-                        ))}
+                        {homologationTypes.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
                       </select>
                     </div>
                   </div>
-
-                  <p className="text-[11px] text-slate-400 italic">
-                    El nombre es estético; el archivo en storage mantiene su nombre original.
-                  </p>
                 </div>
               </div>
-
               <div className="flex gap-3 p-6 pt-0">
-                <button
-                  type="button"
-                  onClick={() => setTemplateToEdit(null)}
-                  className="flex-1 px-4 py-2.5 rounded-xl font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-sm"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2.5 rounded-xl font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-all text-sm"
-                >
-                  Guardar
-                </button>
+                <button type="button" onClick={() => setTemplateToEdit(null)} className="flex-1 px-4 py-2.5 rounded-xl font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-sm">Cancelar</button>
+                <button type="submit" className="flex-1 px-4 py-2.5 rounded-xl font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-all text-sm">Guardar</button>
               </div>
             </form>
           </div>
@@ -328,26 +275,13 @@ export default function TemplatesPage() {
               </div>
               <h3 className="text-lg font-bold mb-1">¿Eliminar plantilla?</h3>
               <p className="text-slate-500 dark:text-slate-400 text-sm">
-                Estás a punto de eliminar{" "}
-                <span className="font-semibold text-slate-800 dark:text-slate-200">
-                  "{templateToDelete.name}"
-                </span>
-                . Esta acción no se puede deshacer.
+                Estás a punto de eliminar "{templateToDelete.name}". Esta acción no se puede deshacer.
               </p>
             </div>
             <div className="flex gap-3 p-6 pt-0">
-              <button
-                onClick={() => setTemplateToDelete(null)}
-                className="flex-1 px-4 py-2.5 rounded-xl font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-sm"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                className="flex-1 px-4 py-2.5 rounded-xl font-semibold bg-red-500 text-white hover:bg-red-600 transition-all text-sm flex items-center justify-center gap-2"
-              >
-                <Trash2 className="w-4 h-4" />
-                Eliminar
+              <button onClick={() => setTemplateToDelete(null)} className="flex-1 px-4 py-2.5 rounded-xl font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-sm">Cancelar</button>
+              <button onClick={handleConfirmDelete} className="flex-1 px-4 py-2.5 rounded-xl font-semibold bg-red-500 text-white hover:bg-red-600 transition-all text-sm flex items-center justify-center gap-2">
+                <Trash2 className="w-4 h-4" /> Eliminar
               </button>
             </div>
           </div>
