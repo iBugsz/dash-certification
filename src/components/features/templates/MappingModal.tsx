@@ -43,25 +43,31 @@ function isMissing(field: MappingField) {
 }
 
 // ─── TypeToggle ───────────────────────────────────────────────────────────────
-
 function TypeToggle({ value, onChange }: { value: FieldType; onChange: (v: FieldType) => void }) {
-  const colorMap = {
-    text:   { active: "bg-blue-500 text-white",   hover: "text-slate-400 hover:bg-blue-50 hover:text-blue-500 dark:hover:bg-blue-900/20" },
-    number: { active: "bg-amber-500 text-white",  hover: "text-slate-400 hover:bg-amber-50 hover:text-amber-500 dark:hover:bg-amber-900/20" },
+  // Usamos Partial para permitir que falten claves y el operador || para un fallback seguro
+  const colorMap: Partial<Record<FieldType, { active: string; hover: string }>> = {
+    text:   { active: "bg-blue-500 text-white",    hover: "text-slate-400 hover:bg-blue-50 hover:text-blue-500 dark:hover:bg-blue-900/20" },
+    number: { active: "bg-amber-500 text-white",   hover: "text-slate-400 hover:bg-amber-50 hover:text-amber-500 dark:hover:bg-amber-900/20" },
     image:  { active: "bg-emerald-500 text-white", hover: "text-slate-400 hover:bg-emerald-50 hover:text-emerald-500 dark:hover:bg-emerald-900/20" },
   };
+
+  // Fallback genérico por si se añade un tipo que no está en el mapa
+  const defaultColors = { active: "bg-slate-500 text-white", hover: "text-slate-400 hover:bg-slate-100" };
 
   return (
     <div className="flex border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-900">
       {TYPE_OPTIONS.map((t) => {
         const isActive = value === t.value;
+        // Obtenemos los colores de forma segura
+        const colors = colorMap[t.value] || defaultColors;
+        
         return (
           <button
             key={t.value}
             type="button"
             title={t.label}
             onClick={() => onChange(t.value)}
-            className={`cursor-pointer relative group px-3 py-2 transition-all duration-200 ${isActive ? colorMap[t.value].active : colorMap[t.value].hover}`}
+            className={`cursor-pointer relative group px-3 py-2 transition-all duration-200 ${isActive ? colors.active : colors.hover}`}
           >
             {t.icon}
             <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 whitespace-nowrap rounded-md bg-slate-900 dark:bg-slate-700 px-2 py-1 text-[10px] text-white opacity-0 group-hover:opacity-100 transition-opacity z-10">
