@@ -1,28 +1,31 @@
-export const applyFormat = (value: any, format?: FieldFormat) => {
+import { MappingField } from "@/lib/types/database";
+
+export const applyFormat = (value: any, format?: MappingField["format"]) => {
   if (value === null || value === undefined || value === "") return "";
 
   // Normalizamos el valor a string, reemplazando comas por puntos
   const strValue = String(value).replace(",", ".").trim();
 
-  if (!format?.case || format.case === "none") return strValue;
+  // Accedemos a format.case de forma segura
+  const caseType = format?.case;
+
+  if (!caseType || caseType === "none") return strValue;
 
   // 1. Formato de Texto
-  if (
-    ["uppercase", "lowercase", "capitalize", "sentence"].includes(format.case)
-  ) {
-    if (format.case === "uppercase") return strValue.toUpperCase();
-    if (format.case === "lowercase") return strValue.toLowerCase();
+  if (["uppercase", "lowercase", "capitalize", "sentence"].includes(caseType)) {
+    if (caseType === "uppercase") return strValue.toUpperCase();
+    if (caseType === "lowercase") return strValue.toLowerCase();
     return strValue;
   }
 
   // 2. Formato de Número
-  if (format.case === "rounded") {
+  if (caseType === "rounded") {
     return Math.round(parseFloat(strValue)).toString();
   }
 
   // 3. Decimales (Truncar estrictamente mediante corte de texto)
-  if (format.case.startsWith("decimal:")) {
-    const dec = parseInt(format.case.split(":")[1]) || 0;
+  if (caseType.startsWith("decimal:")) {
+    const dec = parseInt(caseType.split(":")[1]) || 0;
 
     // Si no tiene punto decimal, tratamos como entero y rellenamos si es necesario
     if (!strValue.includes(".")) {
