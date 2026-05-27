@@ -67,14 +67,16 @@ export interface TemplateFormData {
   name: string;
   description: string;
   company_id: string;
-  homologation_type_id: string; // ← nuevo
+  homologation_type_id: string;
+  mapping: Record<string, MappingField>; // ← ESTO ES LO QUE TE FALTA
 }
 
 export const EMPTY_TEMPLATE_FORM: TemplateFormData = {
   name: "",
   description: "",
   company_id: "",
-  homologation_type_id: "", // ← nuevo
+  homologation_type_id: "",
+  mapping: {}, // ← Inicialízalo vacío
 };
 
 // ─── HOMOLOGATION TYPES ──────────────────────────────────────────────────

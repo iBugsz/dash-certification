@@ -177,7 +177,8 @@ export function useTemplates() {
           company_id: form.company_id || null,
           homologation_type_id: form.homologation_type_id || null,
           active: true,
-          mapping: {},
+          // AQUÍ ESTÁ EL CAMBIO: usamos el mapping que viene del formulario
+          mapping: form.mapping || {},
           preview_url: null,
         })
         .select(
@@ -191,6 +192,9 @@ export function useTemplates() {
         setUploading(false);
         return;
       }
+
+      // Actualizamos el estado local agregando la nueva plantilla
+      setTemplates((prev) => [insertedRows, ...prev]);
 
       onDone();
       setUploading(false);

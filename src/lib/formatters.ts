@@ -15,7 +15,20 @@ export const applyFormat = (value: any, format?: MappingField["format"]) => {
   if (["uppercase", "lowercase", "capitalize", "sentence"].includes(caseType)) {
     if (caseType === "uppercase") return strValue.toUpperCase();
     if (caseType === "lowercase") return strValue.toLowerCase();
-    return strValue;
+
+    // Capitalize: Primera letra de cada palabra en mayúscula
+    if (caseType === "capitalize") {
+      return strValue
+        .toLowerCase()
+        .split(" ")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+    }
+
+    // Sentence: Solo la primera letra de la cadena en mayúscula
+    if (caseType === "sentence") {
+      return strValue.charAt(0).toUpperCase() + strValue.slice(1).toLowerCase();
+    }
   }
 
   // 2. Formato de Número

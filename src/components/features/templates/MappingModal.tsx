@@ -5,7 +5,7 @@ import { X, Trash2, Type, ImageIcon, Hash } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type FieldType = "text" | "number" | "image";
+type FieldType = "text" | "number" | "image" | "unknown";
 type CaseFormat = "none" | "uppercase" | "lowercase" | "capitalize" | "sentence";
 
 interface FieldFormat {
@@ -167,7 +167,6 @@ function FormatList({ field, onUpdate, onClose }: { field: MappingField; onUpdat
   );
 }
 // ─── Field row ────────────────────────────────────────────────────────────────
-
 function FieldRow({
   tag, field, isOpen, onToggle, onChange, onRemove,
 }: {
@@ -178,112 +177,68 @@ function FieldRow({
   onChange: (updated: MappingField) => void;
   onRemove: () => void;
 }) {
-  const upd    = (patch: Partial<MappingField>)  => onChange({ ...field, ...patch });
-  const updFmt = (newFormat: FieldFormat) => 
-  onChange({ ...field, format: newFormat });
+  const upd = (patch: Partial<MappingField>) => onChange({ ...field, ...patch });
+  const updFmt = (newFormat: FieldFormat) => onChange({ ...field, format: newFormat });
   const missing = isMissing(field);
+  const isUnknown = !field.type || field.type === "unknown";
 
   const formatSummary = () => {
-  if (field.type === "text") {
-    return CASE_OPTIONS.find((o) => o.value === field.format?.case)?.label || "Sin formato";
-  }
-  if (field.type === "number") {
-    if (field.format?.case === "rounded") return "Redondeo entero";
-    if (field.format?.case?.startsWith("decimal:")) {
-      const d = field.format.case.split(":")[1];
-      return `${d} decimal${d !== "1" ? "es" : ""}`;
+    if (field.type === "text") return CASE_OPTIONS.find((o) => o.value === field.format?.case)?.label || "Sin formato";
+    if (field.type === "number") {
+      if (field.format?.case === "rounded") return "Redondeo entero";
+      if (field.format?.case?.startsWith("decimal:")) return `${field.format.case.split(":")[1]} decimales`;
+      return "Sin formato";
     }
-    return "Sin formato"; // Valor por defecto
-  }
-  return "Formato";
-};
+    return "Formato";
+  };
 
   return (
     <div className={`border-b border-slate-100 dark:border-slate-800 last:border-b-0 transition-colors ${isOpen ? "bg-slate-50 dark:bg-slate-800/50" : ""}`}>
-      <div
-        className={`flex items-center gap-2 px-4 py-2.5 ${field.type !== "image" ? "cursor-pointer select-none" : ""}`}
-        onClick={(e) => {
-          if (field.type === "image") return;
-          if ((e.target as HTMLElement).closest("input") || (e.target as HTMLElement).closest("button")) return;
-          onToggle();
-        }}
-      >
-        {/* Tipo icono */}
-        <span className={`flex items-center justify-center w-6 h-6 rounded-md border flex-shrink-0 ${
-          field.type === "text" ? "bg-blue-50 text-blue-500 border-blue-100"
-          : field.type === "number" ? "bg-amber-50 text-amber-500 border-amber-100"
-          : "bg-emerald-50 text-emerald-500 border-emerald-100"
-        }`}>
-          {field.type === "text" && <Type size={11} />}
-          {field.type === "number" && <Hash size={11} />}
-          {field.type === "image" && <ImageIcon size={11} />}
-        </span>
+      <div className="flex items-center gap-2 px-4 py-2.5">
+        
+        {/* Icono de estado (si no es desconocido, muestra el icono del tipo) */}
+        {!isUnknown && (
+          <div className={`flex items-center justify-center w-6 h-6 rounded-md border ${
+            field.type === "text" ? "bg-blue-50 text-blue-500 border-blue-100"
+            : field.type === "number" ? "bg-amber-50 text-amber-500 border-amber-100"
+            : "bg-emerald-50 text-emerald-500 border-emerald-100"
+          }`}>
+            {field.type === "text" && <Type size={11} />}
+            {field.type === "number" && <Hash size={11} />}
+            {field.type === "image" && <ImageIcon size={11} />}
+          </div>
+        )}
 
         {/* Tag */}
         <span className="font-mono text-[11px] text-slate-500 w-28 truncate">{`{${tag}}`}</span>
 
-        {field.type !== "image" ? (
+        {/* LÓGICA DE PENDIENTES */}
+        {isUnknown ? (
           <>
-            {/* Hoja */}
-            <input
-              type="text"
-              value={field.sheet ?? ""}
-              onChange={(e) => upd({ sheet: e.target.value })}
-              onClick={(e) => e.stopPropagation()}
-              placeholder="Hoja"
-              className={`w-20 text-xs px-2 py-1 border rounded-md bg-slate-50 dark:bg-slate-800 transition-colors ${
-                missing && !field.sheet?.trim()
-                  ? "border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/10 placeholder-red-300 dark:placeholder-red-700"
-                  : ""
-              }`}
-            />
-            {/* Celda */}
-            <input
-              type="text"
-              value={field.cell ?? ""}
-              onChange={(e) => upd({ cell: e.target.value })}
-              onClick={(e) => e.stopPropagation()}
-              placeholder="A1"
-              className={`w-12 text-xs px-2 py-1 border rounded-md text-center font-mono uppercase bg-slate-50 dark:bg-slate-800 transition-colors ${
-                missing && !field.cell?.trim()
-                  ? "border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/10 placeholder-red-300 dark:placeholder-red-700"
-                  : ""
-              }`}
-            />
-            {/* Botón formato */}
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onToggle(); }}
-              className={`ml-auto text-[10px] px-2 py-1 rounded-md border flex items-center gap-1 cursor-pointer transition-colors ${
-                isOpen
-                  ? "bg-amber-400 text-white border-amber-400 dark:bg-amber-500 dark:border-amber-500"
-                  : "border-slate-200 dark:border-slate-600 text-slate-500 hover:border-slate-300"
-              }`}
-            >
-              {formatSummary()}
-              <span className="inline-block transition-transform duration-200" style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▾</span>
-            </button>
+            <span className="text-[10px] text-slate-400 italic ml-auto mr-2">Toca el icono para definir tipo</span>
+            <div className="flex gap-1">
+              <button onClick={() => upd({ type: "text" })} className="cursor-pointer p-1.5 rounded hover:bg-blue-100 text-slate-400 hover:text-blue-600 transition-colors" title="Texto"><Type size={14} /></button>
+              <button onClick={() => upd({ type: "number" })} className="cursor-pointer p-1.5 rounded hover:bg-amber-100 text-slate-400 hover:text-amber-600 transition-colors" title="Número"><Hash size={14} /></button>
+              <button onClick={() => upd({ type: "image" })} className="cursor-pointer p-1.5 rounded hover:bg-emerald-100 text-slate-400 hover:text-emerald-600 transition-colors" title="Imagen"><ImageIcon size={14} /></button>
+            </div>
           </>
         ) : (
-          <input
-            type="text"
-            value={field.label}
-            onChange={(e) => upd({ label: e.target.value })}
-            className="flex-1 text-xs px-2 py-1 bg-slate-50 border rounded-md"
-          />
+          // LÓGICA DE CAMPOS DEFINIDOS
+          <>
+            <input type="text" value={field.sheet ?? ""} onChange={(e) => upd({ sheet: e.target.value })} placeholder="Hoja" className="w-20 text-xs px-2 py-1 border rounded-md bg-slate-50 dark:bg-slate-800" />
+            <input type="text" value={field.cell ?? ""} onChange={(e) => upd({ cell: e.target.value })} placeholder="A1" className="w-12 text-xs px-2 py-1 border rounded-md text-center font-mono uppercase bg-slate-50 dark:bg-slate-800" />
+            <button type="button" onClick={(e) => { e.stopPropagation(); onToggle(); }} className={`ml-auto text-[10px] px-2 py-1 rounded-md border flex items-center gap-1 ${isOpen ? "bg-amber-400 text-white" : "border-slate-200 text-slate-500"}`}>
+              {formatSummary()} <span className="transition-transform" style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▾</span>
+            </button>
+          </>
         )}
 
-        {/* Indicador faltante */}
-        {missing && (
-          <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-red-400" title="Faltan hoja o celda" />
-        )}
-
-        <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className="p-1 text-slate-300 hover:text-red-400 flex-shrink-0">
+        <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className="cursor-pointer p-1 text-slate-300 hover:text-red-400 flex-shrink-0">
           <Trash2 size={13} />
         </button>
       </div>
 
-      {isOpen && field.type !== "image" && (
+      {isOpen && !isUnknown && field.type !== "image" && (
         <div className="px-4 pb-3">
           <FormatList field={field} onUpdate={updFmt} onClose={onToggle} />
         </div>
@@ -305,32 +260,36 @@ function SectionHeader({ icon, label, count }: { icon: React.ReactNode; label: s
 }
 
 // ─── Main modal ───────────────────────────────────────────────────────────────
-
 export default function MappingModal({ template, onClose, onSave }: MappingModalProps) {
-  const [mapping, setMapping]   = useState<Record<string, MappingField>>(template.mapping || {});
+  const [mapping, setMapping] = useState<Record<string, MappingField>>(template.mapping || {});
   const [isSaving, setIsSaving] = useState(false);
-  const [newTag, setNewTag]     = useState("");
-  const [newType, setNewType]   = useState<FieldType>("text");
+  const [newTag, setNewTag] = useState("");
+  const [newType, setNewType] = useState<FieldType>("text");
   const [newSheet, setNewSheet] = useState("");
-  const [newCell, setNewCell]   = useState("");
+  const [newCell, setNewCell] = useState("");
   const [newLabel, setNewLabel] = useState("");
-  const [openTag, setOpenTag]   = useState<string | null>(null);
+  const [openTag, setOpenTag] = useState<string | null>(null);
 
   const addField = () => {
     const tag = newTag.trim();
     if (!tag || mapping[tag]) return;
-    setMapping({ ...mapping, [tag]: { type: newType, label: newLabel || tag, sheet: newSheet, cell: newCell, format: defaultFormat(newType) } });
+    setMapping({ 
+      ...mapping, 
+      [tag]: { type: newType, label: newLabel || tag, sheet: newSheet, cell: newCell, format: defaultFormat(newType) } 
+    });
     setNewTag(""); setNewCell(""); setNewLabel("");
   };
 
   const updateField = (tag: string, updated: MappingField) => setMapping({ ...mapping, [tag]: updated });
   const removeField = (tag: string) => { const m = { ...mapping }; delete m[tag]; setMapping(m); if (openTag === tag) setOpenTag(null); };
-  const toggleTag   = (tag: string) => setOpenTag((prev) => (prev === tag ? null : tag));
+  const toggleTag = (tag: string) => setOpenTag((prev) => (prev === tag ? null : tag));
 
-  const entries    = Object.entries(mapping);
-  const textFields  = entries.filter(([, f]) => f.type === "text");
+  // Filtros de campos organizados
+  const entries = Object.entries(mapping);
+  const unknownFields = entries.filter(([, f]) => !f.type || f.type === "unknown");
+  const textFields = entries.filter(([, f]) => f.type === "text");
   const numberFields = entries.filter(([, f]) => f.type === "number");
-  const imageFields  = entries.filter(([, f]) => f.type === "image");
+  const imageFields = entries.filter(([, f]) => f.type === "image");
 
   const missingCount = entries.filter(([, f]) => isMissing(f)).length;
 
@@ -357,6 +316,7 @@ export default function MappingModal({ template, onClose, onSave }: MappingModal
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 font-poppins">
       <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        
         {/* Header */}
         <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
           <div>
@@ -373,36 +333,27 @@ export default function MappingModal({ template, onClose, onSave }: MappingModal
           <div className="flex gap-2 items-center">
             <TypeToggle value={newType} onChange={setNewType} />
             <input 
-              type="text" 
-              placeholder="Tag" 
-              value={newTag} 
+              type="text" placeholder="Tag" value={newTag} 
               onChange={(e) => setNewTag(e.target.value)} 
               className="flex-1 text-xs px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400" 
             />
             {newType !== "image" && (
               <>
                 <input 
-                  type="text" 
-                  placeholder="Hoja" 
-                  value={newSheet} 
+                  type="text" placeholder="Hoja" value={newSheet} 
                   onChange={(e) => setNewSheet(e.target.value)} 
                   className="w-20 text-xs px-2 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400" 
                 />
                 <input 
-                  type="text" 
-                  placeholder="A1" 
-                  value={newCell} 
+                  type="text" placeholder="A1" value={newCell} 
                   onChange={(e) => setNewCell(e.target.value)} 
                   className="w-12 text-xs px-2 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400 text-center uppercase" 
                 />
               </>
             )}
             <button 
-              onClick={addField} 
-              disabled={!newTag.trim()} 
-              className="cursor-pointer px-4 py-2 text-xs font-semibold rounded-lg transition-all 
-                        bg-primary text-primary-foreground hover:opacity-90
-                        disabled:opacity-30 disabled:cursor-not-allowed"
+              onClick={addField} disabled={!newTag.trim()} 
+              className="cursor-pointer px-4 py-2 text-xs font-semibold rounded-lg transition-all bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-30"
             >
               + Añadir
             </button>
@@ -414,6 +365,7 @@ export default function MappingModal({ template, onClose, onSave }: MappingModal
           {entries.length === 0 && (
             <p className="text-center text-xs text-slate-400 dark:text-slate-500 py-8">Sin campos aún. Añade uno arriba.</p>
           )}
+          {renderSection(unknownFields, <span className="font-bold text-[10px]">?</span>, "Pendientes")}
           {renderSection(textFields,   <Type size={11} />,      "Texto")}
           {renderSection(numberFields, <Hash size={11} />,      "Número")}
           {renderSection(imageFields,  <ImageIcon size={11} />, "Imagen")}
@@ -421,19 +373,17 @@ export default function MappingModal({ template, onClose, onSave }: MappingModal
 
         {/* Footer */}
         <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">Cancelar</button>
+          <button onClick={onClose} className="px-4 py-2 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700">Cancelar</button>
           {missingCount > 0 && (
-            <span className="text-[10px] text-red-500 dark:text-red-400 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 dark:bg-red-400 inline-block" />
+            <span className="text-[10px] text-red-500 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />
               {missingCount} campo{missingCount > 1 ? "s" : ""} sin completar
             </span>
           )}
           <button
             onClick={async () => { setIsSaving(true); await onSave(template.id, mapping); onClose(); }}
             disabled={isSaving}
-            className="cursor-pointer ml-auto px-5 py-2 text-xs font-semibold rounded-lg transition-all
-                      bg-primary text-primary-foreground hover:opacity-90 shadow-sm
-                      disabled:opacity-50"
+            className="cursor-pointer ml-auto px-5 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
           >
             {isSaving ? "Guardando..." : "Guardar"}
           </button>

@@ -1,5 +1,6 @@
 "use client";
 
+import { extractTagsFromDocx } from "@/lib/template-parser";
 import { useRef, useState, useEffect } from "react";
 import { X, Upload, FileText, Building2, Tag } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -55,11 +56,38 @@ export default function TemplateUploadModal({
       .then(({ data }) => setHomologationTypes(data ?? []));
   }, []);
 
-  const handleFile = (f: File) => {
+  const handleFile = async (f: File) => {
     if (!f.name.endsWith(".docx")) return;
     setFile(f);
+    
     if (!form.name)
       setForm((prev) => ({ ...prev, name: f.name.replace(".docx", "") }));
+
+    try {
+      const buffer = await f.arrayBuffer();
+      const tags = extractTagsFromDocx(buffer);
+      
+      // Construir el objeto de mapeo con el formato exacto que solicitaste
+      const newMapping: Record<string, any> = {};
+      
+      tags.forEach((tag) => {
+        newMapping[tag] = {
+          cell: "",
+          type: "",
+          label: tag,
+          sheet: "",
+          format: {
+            case: "none"
+          }
+        };
+      });
+
+      // Guardamos el mapping en el estado del formulario
+      setForm((prev) => ({ ...prev, mapping: newMapping }));
+      
+    } catch (err) {
+      console.error("Error al generar el mapeo automático:", err);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
