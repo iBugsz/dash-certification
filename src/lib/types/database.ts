@@ -29,10 +29,9 @@ export const EMPTY_FORM: CompanyFormData = {
 
 // ─── TEMPLATES ───────────────────────────────────────────────────────────
 // Define el tipo permitido
-export type FieldType = "text" | "number" | "image";
+export type FieldType = "text" | "number" | "image" | "unknown";
 
 // Define la interfaz una sola vez
-// pal comit
 export interface MappingField {
   type: FieldType;
   label: string;

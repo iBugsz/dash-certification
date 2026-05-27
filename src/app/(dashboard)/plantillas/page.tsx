@@ -205,7 +205,7 @@ export default function TemplatesPage() {
         <MappingModal
           template={selectedTemplateForMapping}
           onClose={() => setSelectedTemplateForMapping(null)}
-          onSave={updateTemplateMapping as (id: string, mapping: Record<string, MappingField>) => Promise<void>}
+          onSave={updateTemplateMapping}
         />
       )}
 

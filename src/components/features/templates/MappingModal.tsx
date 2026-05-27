@@ -2,22 +2,14 @@
 
 import { useState } from "react";
 import { X, Trash2, Type, ImageIcon, Hash } from "lucide-react";
+import { MappingField, FieldType } from "@/lib/types/database";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type FieldType = "text" | "number" | "image" | "unknown";
 type CaseFormat = "none" | "uppercase" | "lowercase" | "capitalize" | "sentence";
 
 interface FieldFormat {
   case?: string; // Ahora guardará: "none", "uppercase", "rounded", "decimal:2", etc.
-}
-
-interface MappingField {
-  type: FieldType;
-  label: string;
-  sheet?: string;
-  cell?: string;
-  format?: FieldFormat;
 }
 
 interface MappingModalProps {
