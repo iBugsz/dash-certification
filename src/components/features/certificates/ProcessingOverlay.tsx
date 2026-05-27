@@ -8,16 +8,10 @@ interface Props {
 
 export function ProcessingOverlay({ progress }: Props) {
   return (
-    <div
-      className="absolute inset-0 backdrop-blur-md z-50 flex flex-col items-center justify-center animate-in fade-in duration-300"
-      style={{ backgroundColor: "rgba(255, 255, 255, 0.9)" }}
-    >
-      <Loader2
-        className="w-16 h-16 animate-spin mb-4"
-        style={{ color: "var(--accent)" }}
-      />
-      <h3 className="text-2xl font-black">Procesando Certificados</h3>
-      <p className="font-medium opacity-60">{progress}% completado</p>
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-[var(--background)]/80 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="flex flex-col items-center">
+        <Loader2 className="w-12 h-12 animate-spin text-[var(--accent)]" />
+      </div>
     </div>
   );
 }

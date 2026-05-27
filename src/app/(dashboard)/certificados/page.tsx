@@ -134,21 +134,15 @@ export default function CertificatesPage() {
         color: "var(--foreground)",
       }}
     >
-      <div className="flex justify-between items-center max-w-4xl mx-auto">
-        <CertificateStepper
-          currentStep={currentStep}
-          isProcessing={isProcessing}
-          getStepperWidth={getStepperWidth}
-        />
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowPresetManager(true)}
-          className="gap-2 rounded-xl"
-        >
-          <Tag className="w-4 h-4" />
-          Tags
-        </Button>
+     <div className="flex justify-center items-center max-w-4xl mx-auto px-4">
+        {/* Ajustamos el ancho para que el stepper pueda expandir sus líneas */}
+        <div className="w-full max-w-sm">
+          <CertificateStepper
+            currentStep={currentStep}
+            isProcessing={isProcessing}
+            getStepperWidth={getStepperWidth}
+          />
+        </div>
       </div>
 
       <div

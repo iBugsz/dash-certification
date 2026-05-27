@@ -11,7 +11,6 @@ export function ExcelDropzone({
 }) {
   const [isDragActive, setIsDragActive] = useState(false);
 
-  // 1. Extendemos la validación de la extensión
   const handleFile = (file: File) => {
     const validExtensions = [".xlsx", ".xls", ".docx", ".doc"];
     const isWordOrExcel = validExtensions.some((ext) =>
@@ -25,89 +24,66 @@ export function ExcelDropzone({
     }
   };
 
-  // Determinar qué icono mostrar según el archivo actual
-  const isWord =
-    currentFile?.name.toLowerCase().endsWith(".doc") ||
-    currentFile?.name.toLowerCase().endsWith(".docx");
+  const isWord = currentFile?.name.toLowerCase().endsWith(".doc") || currentFile?.name.toLowerCase().endsWith(".docx");
 
   return (
     <div
-      onDragOver={(e) => {
-        e.preventDefault();
-        setIsDragActive(true);
-      }}
+      onDragOver={(e) => { e.preventDefault(); setIsDragActive(true); }}
       onDragLeave={() => setIsDragActive(false)}
       onDrop={(e) => {
         e.preventDefault();
         setIsDragActive(false);
         if (e.dataTransfer.files?.[0]) handleFile(e.dataTransfer.files[0]);
       }}
-      className="relative p-8 rounded-[28px] border-2 border-dashed transition-all min-h-[220px] flex flex-col items-center justify-center text-center"
-      style={{
-        backgroundColor: currentFile
-          ? "rgba(5, 205, 153, 0.1)"
-          : isDragActive
-            ? "rgba(67, 24, 255, 0.05)"
-            : "var(--card)",
-        borderColor: currentFile
-          ? "#05cd99"
-          : isDragActive
-            ? "var(--accent)"
-            : "var(--border)",
-        transform: isDragActive ? "scale(1.02)" : "scale(1)",
-      }}
+      className={`relative p-8 rounded-[24px] border-2 border-dashed transition-all duration-300 min-h-[220px] flex flex-col items-center justify-center text-center overflow-hidden
+        ${currentFile 
+          ? "border-[var(--border)] bg-transparent" // Mantenemos el fondo limpio aunque haya archivo
+          : isDragActive 
+            ? "border-[var(--accent)] bg-[var(--accent)]/[0.05] scale-[1.01]" 
+            : "border-[var(--border)] bg-transparent hover:border-[var(--accent)]/50"
+        }`}
     >
       {!currentFile ? (
         <>
-          {/* 2. Actualizamos el atributo accept */}
           <input
             type="file"
             className="absolute inset-0 opacity-0 cursor-pointer"
             accept=".xlsx,.xls,.doc,.docx"
-            onChange={(e) =>
-              e.target.files?.[0] && handleFile(e.target.files[0])
-            }
+            onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
           />
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-            style={{ backgroundColor: "rgba(67, 24, 255, 0.15)" }}
-          >
-            <Upload className="w-7 h-7" style={{ color: "var(--accent)" }} />
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-[var(--accent)]/10">
+            <Upload className="w-7 h-7 text-[var(--accent)]" />
           </div>
-          <h3
-            className="text-base font-bold"
-            style={{ color: "var(--foreground)" }}
-          >
-            Subir Documento o Base de Datos
-          </h3>
-          <p
-            className="text-xs mt-2"
-            style={{ color: "var(--sidebar-fg-muted)" }}
-          >
-            Arrastra tu archivo .xlsx, .docx o haz clic
-          </p>
+          <h3 className="text-sm font-bold text-[var(--foreground)]">Seleccionar archivo</h3>
+          <p className="text-xs mt-1 text-[var(--sidebar-fg-muted)]">Excel o Word (Máx 10MB)</p>
         </>
       ) : (
-        <div className="flex flex-col items-center">
-          {/* 3. Cambiamos el icono dinámicamente */}
-          {isWord ? (
-            <FileText className="w-10 h-10 text-blue-500 mb-2" />
-          ) : (
-            <FileSpreadsheet className="w-10 h-10 text-emerald-500 mb-2" />
-          )}
+        <div className="flex flex-col items-center animate-in zoom-in-95 duration-300 w-full">
+          {/* ICONO CON FONDO VERDE */}
+          <div className="w-20 h-20 rounded-3xl bg-emerald-500/10 flex items-center justify-center mb-6 border border-emerald-500/20 shadow-sm">
+            {isWord ? (
+              <FileText className="w-10 h-10 text-emerald-500" />
+            ) : (
+              <FileSpreadsheet className="w-10 h-10 text-emerald-500" />
+            )}
+          </div>
 
-          <p
-            className="text-sm font-bold truncate max-w-[200px]"
-            style={{ color: "var(--foreground)" }}
-          >
-            {currentFile.name}
-          </p>
+          <div className="space-y-1 mb-8 w-full px-4">
+            <p className="text-sm font-bold text-[var(--foreground)] truncate">
+              {currentFile.name}
+            </p>
+            <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">
+              Documento cargado
+            </p>
+          </div>
+
+          {/* BOTÓN ELIMINAR MÁS GRANDE Y CLARO */}
           <button
-            onClick={() => onFileSelect(null)}
-            className="mt-4 text-[10px] font-black uppercase flex items-center gap-1"
-            style={{ color: "var(--accent)" }}
+            onClick={(e) => { e.preventDefault(); onFileSelect(null); }}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-red-500/10 hover:text-red-500 transition-all text-[11px] font-bold uppercase tracking-widest text-[var(--foreground)]"
           >
-            <X className="w-3 h-3" /> Eliminar
+            <X className="w-3.5 h-3.5" /> 
+            Quitar archivo
           </button>
         </div>
       )}
