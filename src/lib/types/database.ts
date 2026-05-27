@@ -29,19 +29,29 @@ export const EMPTY_FORM: CompanyFormData = {
 
 // ─── TEMPLATES ───────────────────────────────────────────────────────────
 // Define el tipo permitido
-export type FieldType = "text" | "number" | "image" | "unknown";
+export type CaseFormat =
+  | "none"
+  | "uppercase"
+  | "lowercase"
+  | "capitalize"
+  | "sentence";
 
-// Define la interfaz una sola vez
+export interface FieldFormat {
+  case?: CaseFormat | string; // Se usa string para soportar "decimal:X" y "rounded"
+}
+// 2. Interfaz clara para el campo (MappingField)
 export interface MappingField {
   type: FieldType;
   label: string;
   sheet?: string;
   cell?: string;
+  // Usamos el objeto formato definido aquí
   format?: {
-    case?: string;
+    case?: string; // Mantiene compatibilidad con "decimal:X", "rounded", etc.
   };
 }
 
+// 3. Interfaz del Template
 export interface Template {
   id: string;
   name: string;
@@ -52,22 +62,24 @@ export interface Template {
   preview_url: string | null;
   has_preview: boolean;
   company_id: string | null;
-  homologation_type_id: string | null; // ← nuevo
+  homologation_type_id: string | null;
   variables: Record<string, string> | null;
-  mapping: Record<string, any> | null;
+  // IMPORTANTE: Aquí cambiamos 'any' por Record<string, MappingField>
+  mapping: Record<string, MappingField> | null;
   active: boolean;
   created_at: string;
   updated_at: string;
   company?: { id: string; name: string } | null;
-  homologation_type?: { id: string; name: string } | null; // ← nuevo
+  homologation_type?: { id: string; name: string } | null;
 }
 
+// 4. Interfaz de formulario
 export interface TemplateFormData {
   name: string;
   description: string;
   company_id: string;
   homologation_type_id: string;
-  mapping: Record<string, MappingField>; // ← ESTO ES LO QUE TE FALTA
+  mapping: Record<string, MappingField>;
 }
 
 export const EMPTY_TEMPLATE_FORM: TemplateFormData = {

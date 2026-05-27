@@ -2,15 +2,10 @@
 
 import { useState } from "react";
 import { X, Trash2, Type, ImageIcon, Hash } from "lucide-react";
-import { MappingField, FieldType } from "@/lib/types/database";
+// En MappingModal.tsx
+import { MappingField, FieldType, FieldFormat, CaseFormat } from "@/lib/types/database";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-type CaseFormat = "none" | "uppercase" | "lowercase" | "capitalize" | "sentence";
-
-interface FieldFormat {
-  case?: string; // Ahora guardará: "none", "uppercase", "rounded", "decimal:2", etc.
-}
 
 interface MappingModalProps {
   template: any;
