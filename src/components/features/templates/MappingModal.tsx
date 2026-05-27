@@ -356,28 +356,54 @@ export default function MappingModal({ template, onClose, onSave }: MappingModal
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 font-poppins">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-2xl shadow-2xl border overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         {/* Header */}
-        <div className="px-5 py-4 border-b flex justify-between items-center">
+        <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
           <div>
-            <p className="text-sm font-semibold">Configurar mapeo</p>
-            <p className="text-[11px] text-slate-400">{template.name}</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Configurar mapeo</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">{template.name}</p>
           </div>
-          <button onClick={onClose}><X size={15} /></button>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <X size={15} />
+          </button>
         </div>
 
         {/* Add row */}
-        <div className="px-4 py-3 border-b space-y-2">
+        <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 space-y-2">
           <div className="flex gap-2 items-center">
             <TypeToggle value={newType} onChange={setNewType} />
-            <input type="text" placeholder="Tag" value={newTag} onChange={(e) => setNewTag(e.target.value)} className="flex-1 text-xs px-3 py-2 bg-slate-50 border rounded-lg" />
+            <input 
+              type="text" 
+              placeholder="Tag" 
+              value={newTag} 
+              onChange={(e) => setNewTag(e.target.value)} 
+              className="flex-1 text-xs px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400" 
+            />
             {newType !== "image" && (
               <>
-                <input type="text" placeholder="Hoja" value={newSheet} onChange={(e) => setNewSheet(e.target.value)} className="w-20 text-xs px-2 py-2 bg-slate-50 border rounded-lg" />
-                <input type="text" placeholder="A1" value={newCell} onChange={(e) => setNewCell(e.target.value)} className="w-12 text-xs px-2 py-2 bg-slate-50 border rounded-lg text-center uppercase" />
+                <input 
+                  type="text" 
+                  placeholder="Hoja" 
+                  value={newSheet} 
+                  onChange={(e) => setNewSheet(e.target.value)} 
+                  className="w-20 text-xs px-2 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400" 
+                />
+                <input 
+                  type="text" 
+                  placeholder="A1" 
+                  value={newCell} 
+                  onChange={(e) => setNewCell(e.target.value)} 
+                  className="w-12 text-xs px-2 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400 text-center uppercase" 
+                />
               </>
             )}
-            <button onClick={addField} disabled={!newTag.trim()} className="px-3 py-2 text-xs font-medium rounded-lg bg-slate-900 text-white disabled:opacity-30">
+            <button 
+              onClick={addField} 
+              disabled={!newTag.trim()} 
+              className="cursor-pointer px-4 py-2 text-xs font-semibold rounded-lg transition-all 
+                        bg-primary text-primary-foreground hover:opacity-90
+                        disabled:opacity-30 disabled:cursor-not-allowed"
+            >
               + Añadir
             </button>
           </div>
@@ -386,7 +412,7 @@ export default function MappingModal({ template, onClose, onSave }: MappingModal
         {/* List */}
         <div className="max-h-[52vh] overflow-y-auto">
           {entries.length === 0 && (
-            <p className="text-center text-xs text-slate-400 py-8">Sin campos aún. Añade uno arriba.</p>
+            <p className="text-center text-xs text-slate-400 dark:text-slate-500 py-8">Sin campos aún. Añade uno arriba.</p>
           )}
           {renderSection(textFields,   <Type size={11} />,      "Texto")}
           {renderSection(numberFields, <Hash size={11} />,      "Número")}
@@ -394,17 +420,20 @@ export default function MappingModal({ template, onClose, onSave }: MappingModal
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t flex items-center gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-xs text-slate-400">Cancelar</button>
+        <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-3">
+          <button onClick={onClose} className="px-4 py-2 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">Cancelar</button>
           {missingCount > 0 && (
-            <span className="text-[10px] text-red-400 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block" />
+            <span className="text-[10px] text-red-500 dark:text-red-400 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 dark:bg-red-400 inline-block" />
               {missingCount} campo{missingCount > 1 ? "s" : ""} sin completar
             </span>
           )}
           <button
             onClick={async () => { setIsSaving(true); await onSave(template.id, mapping); onClose(); }}
-            className="ml-auto px-4 py-2 text-xs font-semibold bg-slate-900 text-white rounded-lg"
+            disabled={isSaving}
+            className="cursor-pointer ml-auto px-5 py-2 text-xs font-semibold rounded-lg transition-all
+                      bg-primary text-primary-foreground hover:opacity-90 shadow-sm
+                      disabled:opacity-50"
           >
             {isSaving ? "Guardando..." : "Guardar"}
           </button>
