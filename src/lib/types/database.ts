@@ -39,15 +39,23 @@ export type CaseFormat =
 export interface FieldFormat {
   case?: CaseFormat | string; // Se usa string para soportar "decimal:X" y "rounded"
 }
-// 2. Interfaz clara para el campo (MappingField)
+
+export type FieldType =
+  | "text"
+  | "number"
+  | "date"
+  | "boolean"
+  | "email"
+  | "currency"; // Add any other types you use in your app
+
+// Now the MappingField interface will work correctly:
 export interface MappingField {
-  type: FieldType;
+  type: FieldType; // This will now resolve correctly
   label: string;
   sheet?: string;
   cell?: string;
-  // Usamos el objeto formato definido aquí
   format?: {
-    case?: string; // Mantiene compatibilidad con "decimal:X", "rounded", etc.
+    case?: string;
   };
 }
 
