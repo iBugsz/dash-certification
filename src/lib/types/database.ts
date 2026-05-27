@@ -32,6 +32,7 @@ export const EMPTY_FORM: CompanyFormData = {
 export type FieldType = "text" | "number" | "image";
 
 // Define la interfaz una sola vez
+// pal comit
 export interface MappingField {
   type: FieldType;
   label: string;
