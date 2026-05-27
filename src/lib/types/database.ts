@@ -47,7 +47,9 @@ export type FieldType =
   | "boolean"
   | "email"
   | "currency"
-  | "image";
+  | "image"
+  | "unknown";
+
 // Now the MappingField interface will work correctly:
 export interface MappingField {
   type: FieldType; // This will now resolve correctly
