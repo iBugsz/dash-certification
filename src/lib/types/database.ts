@@ -28,9 +28,18 @@ export const EMPTY_FORM: CompanyFormData = {
 };
 
 // ─── TEMPLATES ───────────────────────────────────────────────────────────
+// Define el tipo permitido
+export type FieldType = "text" | "number" | "image";
+
+// Define la interfaz una sola vez
 export interface MappingField {
+  type: FieldType;
   label: string;
-  type: "text" | "image";
+  sheet?: string;
+  cell?: string;
+  format?: {
+    case?: string;
+  };
 }
 
 export interface Template {
@@ -109,16 +118,4 @@ export interface CADBlock {
   collection_id?: string | null; // El enlace a tu nueva tabla de colecciones
   created_at: string; // timestamptz (now())
   updated_at: string; // timestamptz (now())
-}
-
-export type FieldType = "text" | "number" | "image";
-
-export interface MappingField {
-  type: FieldType;
-  label: string;
-  sheet?: string;
-  cell?: string;
-  format?: {
-    case?: string;
-  };
 }
