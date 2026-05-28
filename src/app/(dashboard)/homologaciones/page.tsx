@@ -105,7 +105,7 @@ export default function HomologationDashboard() {
               <HomologationCard 
                 item={item} 
                 onToggle={toggleStatus}
-                onEdit={(val) => { setEditing(val); setShowModal(true); }} 
+                onEdit={(val: any) => { setEditing(val); setShowModal(true); }}
                 onDelete={() => setItemToDelete({ id: item.id, name: item.name, type: 'homologacion' })} 
               />
             </div>
