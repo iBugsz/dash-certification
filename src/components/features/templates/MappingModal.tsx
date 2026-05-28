@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { X, Trash2, Type, ImageIcon, Hash } from "lucide-react";
-// En MappingModal.tsx
+import { useState, useEffect } from "react";
+import { X, Trash2, Type, ImageIcon, Hash, Layers } from "lucide-react";
 import { MappingField, FieldType, FieldFormat, CaseFormat } from "@/lib/types/database";
+import { supabase } from "@/lib/supabase";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -22,18 +22,18 @@ const TYPE_OPTIONS: { value: FieldType; icon: React.ReactNode; label: string }[]
 ];
 
 const CASE_OPTIONS: { value: CaseFormat; label: string; example: string }[] = [
-  { value: "none",       label: "Sin formato",            example: "abc" },
-  { value: "capitalize", label: "Cada palabra mayús.",    example: "Abc Def" },
-  { value: "sentence",   label: "Solo la inicial mayús.", example: "Abc def" },
-  { value: "uppercase",  label: "Todo mayúsculas",        example: "ABC" },
-  { value: "lowercase",  label: "Todo minúsculas",        example: "abc" },
+  { value: "none",        label: "Sin formato",            example: "abc" },
+  { value: "capitalize",  label: "Cada palabra mayús.",    example: "Abc Def" },
+  { value: "sentence",    label: "Solo la inicial mayús.", example: "Abc def" },
+  { value: "uppercase",   label: "Todo mayúsculas",        example: "ABC" },
+  { value: "lowercase",   label: "Todo minúsculas",        example: "abc" },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function defaultFormat(type: FieldType): FieldFormat | undefined {
   if (type === "text") return { case: "none" };
-  if (type === "number") return { case: "none" }; // Nuevo estándar
+  if (type === "number") return { case: "none" };
   return undefined;
 }
 
@@ -44,21 +44,18 @@ function isMissing(field: MappingField) {
 
 // ─── TypeToggle ───────────────────────────────────────────────────────────────
 function TypeToggle({ value, onChange }: { value: FieldType; onChange: (v: FieldType) => void }) {
-  // Usamos Partial para permitir que falten claves y el operador || para un fallback seguro
   const colorMap: Partial<Record<FieldType, { active: string; hover: string }>> = {
     text:   { active: "bg-blue-500 text-white",    hover: "text-slate-400 hover:bg-blue-50 hover:text-blue-500 dark:hover:bg-blue-900/20" },
     number: { active: "bg-amber-500 text-white",   hover: "text-slate-400 hover:bg-amber-50 hover:text-amber-500 dark:hover:bg-amber-900/20" },
     image:  { active: "bg-emerald-500 text-white", hover: "text-slate-400 hover:bg-emerald-50 hover:text-emerald-500 dark:hover:bg-emerald-900/20" },
   };
 
-  // Fallback genérico por si se añade un tipo que no está en el mapa
   const defaultColors = { active: "bg-slate-500 text-white", hover: "text-slate-400 hover:bg-slate-100" };
 
   return (
     <div className="flex border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-900">
       {TYPE_OPTIONS.map((t) => {
         const isActive = value === t.value;
-        // Obtenemos los colores de forma segura
         const colors = colorMap[t.value] || defaultColors;
         
         return (
@@ -82,11 +79,8 @@ function TypeToggle({ value, onChange }: { value: FieldType; onChange: (v: Field
 
 // ─── FormatList ───────────────────────────────────────────────────────────────
 function FormatList({ field, onUpdate, onClose }: { field: MappingField; onUpdate: (f: Partial<FieldFormat>) => void; onClose: () => void }) {
-  
   return (
     <div className="mt-2.5 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-900">
-      
-      {/* Opciones para Texto */}
       {field.type === "text" && (
         <div className="divide-y divide-slate-100 dark:divide-slate-700">
           {CASE_OPTIONS.map((opt) => (
@@ -106,7 +100,6 @@ function FormatList({ field, onUpdate, onClose }: { field: MappingField; onUpdat
         </div>
       )}
 
-      {/* Opciones para Número */}
       {field.type === "number" && (
         <div className="divide-y divide-slate-100 dark:divide-slate-700">
           <button
@@ -159,6 +152,7 @@ function FormatList({ field, onUpdate, onClose }: { field: MappingField; onUpdat
     </div>
   );
 }
+
 // ─── Field row ────────────────────────────────────────────────────────────────
 function FieldRow({
   tag, field, isOpen, onToggle, onChange, onRemove,
@@ -172,7 +166,6 @@ function FieldRow({
 }) {
   const upd = (patch: Partial<MappingField>) => onChange({ ...field, ...patch });
   const updFmt = (newFormat: FieldFormat) => onChange({ ...field, format: newFormat });
-  const missing = isMissing(field);
   const isUnknown = !field.type || field.type === "unknown";
 
   const formatSummary = () => {
@@ -188,8 +181,6 @@ function FieldRow({
   return (
     <div className={`border-b border-slate-100 dark:border-slate-800 last:border-b-0 transition-colors ${isOpen ? "bg-slate-50 dark:bg-slate-800/50" : ""}`}>
       <div className="flex items-center gap-2 px-4 py-2.5">
-        
-        {/* Icono de estado (si no es desconocido, muestra el icono del tipo) */}
         {!isUnknown && (
           <div className={`flex items-center justify-center w-6 h-6 rounded-md border ${
             field.type === "text" ? "bg-blue-50 text-blue-500 border-blue-100"
@@ -201,11 +192,7 @@ function FieldRow({
             {field.type === "image" && <ImageIcon size={11} />}
           </div>
         )}
-
-        {/* Tag */}
         <span className="font-mono text-[11px] text-slate-500 w-28 truncate">{`{${tag}}`}</span>
-
-        {/* LÓGICA DE PENDIENTES */}
         {isUnknown ? (
           <>
             <span className="text-[10px] text-slate-400 italic ml-auto mr-2">Toca el icono para definir tipo</span>
@@ -216,7 +203,6 @@ function FieldRow({
             </div>
           </>
         ) : (
-          // LÓGICA DE CAMPOS DEFINIDOS
           <>
             <input type="text" value={field.sheet ?? ""} onChange={(e) => upd({ sheet: e.target.value })} placeholder="Hoja" className="w-20 text-xs px-2 py-1 border rounded-md bg-slate-50 dark:bg-slate-800" />
             <input type="text" value={field.cell ?? ""} onChange={(e) => upd({ cell: e.target.value })} placeholder="A1" className="w-12 text-xs px-2 py-1 border rounded-md text-center font-mono uppercase bg-slate-50 dark:bg-slate-800" />
@@ -225,29 +211,15 @@ function FieldRow({
             </button>
           </>
         )}
-
         <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className="cursor-pointer p-1 text-slate-300 hover:text-red-400 flex-shrink-0">
           <Trash2 size={13} />
         </button>
       </div>
-
       {isOpen && !isUnknown && field.type !== "image" && (
         <div className="px-4 pb-3">
           <FormatList field={field} onUpdate={updFmt} onClose={onToggle} />
         </div>
       )}
-    </div>
-  );
-}
-
-// ─── Section header ───────────────────────────────────────────────────────────
-
-function SectionHeader({ icon, label, count }: { icon: React.ReactNode; label: string; count: number }) {
-  return (
-    <div className="flex items-center gap-2 px-4 py-1.5 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800">
-      <span className="text-slate-400">{icon}</span>
-      <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{label}</span>
-      <span className="ml-auto text-[10px] text-slate-300 dark:text-slate-600">{count}</span>
     </div>
   );
 }
@@ -260,124 +232,130 @@ export default function MappingModal({ template, onClose, onSave }: MappingModal
   const [newType, setNewType] = useState<FieldType>("text");
   const [newSheet, setNewSheet] = useState("");
   const [newCell, setNewCell] = useState("");
-  const [newLabel, setNewLabel] = useState("");
   const [openTag, setOpenTag] = useState<string | null>(null);
+  
+  // States para Presets
+  const [presets, setPresets] = useState<any[]>([]);
+  const [selectedPreset, setSelectedPreset] = useState("");
+
+  useEffect(() => {
+    const fetchPresets = async () => {
+      const { data } = await supabase.from("tag_presets").select("id, name, tags");
+      if (data) setPresets(data);
+    };
+    fetchPresets();
+  }, []);
+
+  const applyPreset = (presetId: string) => {
+    const preset = presets.find(p => p.id === presetId);
+    if (!preset) return;
+
+    const newTags = preset.tags;
+    const existingTags = Object.keys(mapping);
+    const conflicts = Object.keys(newTags).filter(tag => existingTags.includes(tag));
+
+    if (conflicts.length > 0) {
+      if (!window.confirm(`Los siguientes tags ya existen: ${conflicts.join(", ")}. ¿Deseas sobrescribirlos?`)) {
+        return;
+      }
+    }
+    setMapping(prev => ({ ...prev, ...newTags }));
+  };
 
   const addField = () => {
     const tag = newTag.trim();
     if (!tag || mapping[tag]) return;
     setMapping({ 
       ...mapping, 
-      [tag]: { type: newType, label: newLabel || tag, sheet: newSheet, cell: newCell, format: defaultFormat(newType) } 
+      [tag]: { type: newType, label: tag, sheet: newSheet, cell: newCell, format: defaultFormat(newType) } 
     });
-    setNewTag(""); setNewCell(""); setNewLabel("");
+    setNewTag(""); setNewCell("");
   };
 
   const updateField = (tag: string, updated: MappingField) => setMapping({ ...mapping, [tag]: updated });
   const removeField = (tag: string) => { const m = { ...mapping }; delete m[tag]; setMapping(m); if (openTag === tag) setOpenTag(null); };
   const toggleTag = (tag: string) => setOpenTag((prev) => (prev === tag ? null : tag));
 
-  // Filtros de campos organizados
   const entries = Object.entries(mapping);
   const unknownFields = entries.filter(([, f]) => !f.type || f.type === "unknown");
   const textFields = entries.filter(([, f]) => f.type === "text");
   const numberFields = entries.filter(([, f]) => f.type === "number");
   const imageFields = entries.filter(([, f]) => f.type === "image");
-
   const missingCount = entries.filter(([, f]) => isMissing(f)).length;
-
-  const renderSection = (items: [string, MappingField][], icon: React.ReactNode, label: string) => {
-    if (items.length === 0) return null;
-    return (
-      <>
-        <SectionHeader icon={icon} label={label} count={items.length} />
-        {items.map(([tag, field]) => (
-          <FieldRow
-            key={tag}
-            tag={tag}
-            field={field}
-            isOpen={openTag === tag}
-            onToggle={() => toggleTag(tag)}
-            onChange={(u) => updateField(tag, u)}
-            onRemove={() => removeField(tag)}
-          />
-        ))}
-      </>
-    );
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 font-poppins">
       <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         
-        {/* Header */}
         <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
           <div>
             <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Configurar mapeo</p>
             <p className="text-[11px] text-slate-500 dark:text-slate-400">{template.name}</p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-            <X size={15} />
-          </button>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X size={15} /></button>
         </div>
 
-        {/* Add row */}
+        {/* Selector de Presets */}
+        <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2">
+          <Layers size={14} className="text-slate-400" />
+          <select 
+            className="w-full text-xs p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+            value={selectedPreset}
+            onChange={(e) => {
+              setSelectedPreset(e.target.value);
+              applyPreset(e.target.value);
+            }}
+          >
+            <option value="">Cargar grupo de etiquetas...</option>
+            {presets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        </div>
+
         <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 space-y-2">
           <div className="flex gap-2 items-center">
             <TypeToggle value={newType} onChange={setNewType} />
-            <input 
-              type="text" placeholder="Tag" value={newTag} 
-              onChange={(e) => setNewTag(e.target.value)} 
-              className="flex-1 text-xs px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400" 
-            />
+            <input type="text" placeholder="Tag" value={newTag} onChange={(e) => setNewTag(e.target.value)} className="flex-1 text-xs px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg" />
             {newType !== "image" && (
               <>
-                <input 
-                  type="text" placeholder="Hoja" value={newSheet} 
-                  onChange={(e) => setNewSheet(e.target.value)} 
-                  className="w-20 text-xs px-2 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400" 
-                />
-                <input 
-                  type="text" placeholder="A1" value={newCell} 
-                  onChange={(e) => setNewCell(e.target.value)} 
-                  className="w-12 text-xs px-2 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400 text-center uppercase" 
-                />
+                <input type="text" placeholder="Hoja" value={newSheet} onChange={(e) => setNewSheet(e.target.value)} className="w-20 text-xs px-2 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg" />
+                <input type="text" placeholder="A1" value={newCell} onChange={(e) => setNewCell(e.target.value)} className="w-12 text-xs px-2 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-center uppercase" />
               </>
             )}
-            <button 
-              onClick={addField} disabled={!newTag.trim()} 
-              className="cursor-pointer px-4 py-2 text-xs font-semibold rounded-lg transition-all bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-30"
-            >
-              + Añadir
-            </button>
+            <button onClick={addField} disabled={!newTag.trim()} className="cursor-pointer px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-30">+ Añadir</button>
           </div>
         </div>
 
-        {/* List */}
         <div className="max-h-[52vh] overflow-y-auto">
-          {entries.length === 0 && (
-            <p className="text-center text-xs text-slate-400 dark:text-slate-500 py-8">Sin campos aún. Añade uno arriba.</p>
+          {entries.length === 0 && <p className="text-center text-xs text-slate-400 py-8">Sin campos aún.</p>}
+          {unknownFields.length > 0 && (
+            <>
+              <div className="px-4 py-1.5 bg-slate-50 border-b text-[10px] font-semibold text-slate-400">PENDIENTES</div>
+              {unknownFields.map(([tag, field]) => <FieldRow key={tag} tag={tag} field={field} isOpen={openTag === tag} onToggle={() => toggleTag(tag)} onChange={(u) => updateField(tag, u)} onRemove={() => removeField(tag)} />)}
+            </>
           )}
-          {renderSection(unknownFields, <span className="font-bold text-[10px]">?</span>, "Pendientes")}
-          {renderSection(textFields,   <Type size={11} />,      "Texto")}
-          {renderSection(numberFields, <Hash size={11} />,      "Número")}
-          {renderSection(imageFields,  <ImageIcon size={11} />, "Imagen")}
+          {textFields.length > 0 && (
+            <>
+              <div className="px-4 py-1.5 bg-slate-50 border-b text-[10px] font-semibold text-slate-400">TEXTO</div>
+              {textFields.map(([tag, field]) => <FieldRow key={tag} tag={tag} field={field} isOpen={openTag === tag} onToggle={() => toggleTag(tag)} onChange={(u) => updateField(tag, u)} onRemove={() => removeField(tag)} />)}
+            </>
+          )}
+          {numberFields.length > 0 && (
+            <>
+              <div className="px-4 py-1.5 bg-slate-50 border-b text-[10px] font-semibold text-slate-400">NÚMERO</div>
+              {numberFields.map(([tag, field]) => <FieldRow key={tag} tag={tag} field={field} isOpen={openTag === tag} onToggle={() => toggleTag(tag)} onChange={(u) => updateField(tag, u)} onRemove={() => removeField(tag)} />)}
+            </>
+          )}
+          {imageFields.length > 0 && (
+            <>
+              <div className="px-4 py-1.5 bg-slate-50 border-b text-[10px] font-semibold text-slate-400">IMAGEN</div>
+              {imageFields.map(([tag, field]) => <FieldRow key={tag} tag={tag} field={field} isOpen={openTag === tag} onToggle={() => toggleTag(tag)} onChange={(u) => updateField(tag, u)} onRemove={() => removeField(tag)} />)}
+            </>
+          )}
         </div>
 
-        {/* Footer */}
         <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700">Cancelar</button>
-          {missingCount > 0 && (
-            <span className="text-[10px] text-red-500 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />
-              {missingCount} campo{missingCount > 1 ? "s" : ""} sin completar
-            </span>
-          )}
-          <button
-            onClick={async () => { setIsSaving(true); await onSave(template.id, mapping); onClose(); }}
-            disabled={isSaving}
-            className="cursor-pointer ml-auto px-5 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
-          >
+          <button onClick={onClose} className="px-4 py-2 text-xs text-slate-500 hover:text-slate-700">Cancelar</button>
+          <button onClick={async () => { setIsSaving(true); await onSave(template.id, mapping); onClose(); }} disabled={isSaving} className="cursor-pointer ml-auto px-5 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50">
             {isSaving ? "Guardando..." : "Guardar"}
           </button>
         </div>
