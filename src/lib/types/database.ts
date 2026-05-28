@@ -10,7 +10,7 @@ export interface Company {
   nit: string | null;
   active: boolean;
   created_at: string;
-  updated_at: string; // ← agrega esto
+  updated_at: string;
 }
 
 export interface CompanyFormData {
@@ -37,7 +37,7 @@ export type CaseFormat =
   | "sentence";
 
 export interface FieldFormat {
-  case?: CaseFormat | string; // Se usa string para soportar "decimal:X" y "rounded"
+  case?: CaseFormat | string;
 }
 
 export type FieldType =
@@ -52,7 +52,7 @@ export type FieldType =
 
 // Now the MappingField interface will work correctly:
 export interface MappingField {
-  type: FieldType; // This will now resolve correctly
+  type: FieldType;
   label: string;
   sheet?: string;
   cell?: string;
@@ -74,7 +74,6 @@ export interface Template {
   company_id: string | null;
   homologation_type_id: string | null;
   variables: Record<string, string> | null;
-  // IMPORTANTE: Aquí cambiamos 'any' por Record<string, MappingField>
   mapping: Record<string, MappingField> | null;
   active: boolean;
   created_at: string;
@@ -97,7 +96,7 @@ export const EMPTY_TEMPLATE_FORM: TemplateFormData = {
   description: "",
   company_id: "",
   homologation_type_id: "",
-  mapping: {}, // ← Inicialízalo vacío
+  mapping: {},
 };
 
 // ─── HOMOLOGATION TYPES ──────────────────────────────────────────────────
@@ -105,7 +104,7 @@ export interface HomologationType {
   id: string;
   name: string;
   description: string | null;
-  icon: string; // ← nuevo
+  icon: string;
   active: boolean;
   created_at: string;
   updated_at: string;
@@ -114,13 +113,13 @@ export interface HomologationType {
 export interface HomologationTypeFormData {
   name: string;
   description: string;
-  icon: string; // ← nuevo
+  icon: string;
 }
 
 export const EMPTY_HOMOLOGATION_FORM: HomologationTypeFormData = {
   name: "",
   description: "",
-  icon: "FileQuestion", // ← nuevo
+  icon: "FileQuestion",
 };
 
 export interface Collection {
@@ -131,15 +130,15 @@ export interface Collection {
 }
 
 export interface CADBlock {
-  id: string; // uuid gen_random_uuid()
-  user_id: string | null; // uuid
-  name: string; // text ('Sin nombre'::text)
-  description: string | null; // text
-  raw_vector_data: string | null; // text
-  source_format: string; // text ('unknown'::text)
-  tags: string[]; // text[] ('{}'::text[])
-  thumbnail_svg: string | null; // text
-  collection_id?: string | null; // El enlace a tu nueva tabla de colecciones
-  created_at: string; // timestamptz (now())
-  updated_at: string; // timestamptz (now())
+  id: string;
+  user_id: string | null;
+  name: string;
+  description: string | null;
+  raw_vector_data: string | null;
+  source_format: string;
+  tags: string[];
+  thumbnail_svg: string | null;
+  collection_id?: string | null;
+  created_at: string;
+  updated_at: string;
 }

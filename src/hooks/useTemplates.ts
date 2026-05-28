@@ -15,13 +15,16 @@ const sanitizeFileName = (name: string) => {
 
 const triggerPreviewGeneration = (
   templateId: string,
-  filePath: string,
+  filePath: string, // Ejemplo: "uploads/MiPlantilla_a7f2.docx"
   onSuccess: (previewUrl: string) => void,
 ) => {
+  // Extraemos "MiPlantilla_a7f2" del path
+  const fileName = filePath.split("/").pop()?.split(".")[0];
+
   fetch("/api/templates/generate-preview", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ templateId, storagePath: filePath }),
+    body: JSON.stringify({ templateId, storagePath: filePath, fileName }), // Enviamos fileName
     keepalive: true,
   })
     .then(async (res) => {
@@ -148,13 +151,26 @@ export function useTemplates() {
     if (!file) return;
     setUploading(true);
 
-    const cleanFileName = sanitizeFileName(file.name);
-    const filePath = `uploads/${Date.now()}_${cleanFileName}`;
+    // 1. Limpiamos el nombre original y separamos la extensión
+    const rawName = file.name.replace(/\.[^/.]+$/, ""); // Nombre sin extensión
+    const extension = file.name.split(".").pop(); // La extensión (ej: 'docx')
+    const cleanName = sanitizeFileName(rawName);
+
+    // 2. Generamos un sufijo único corto (ej: "_a7f2")
+    const uniqueSuffix = Math.random().toString(36).substring(2, 6);
+
+    // 3. Ruta final: "uploads/Nombre_a7f2.docx"
+    const filePath = `uploads/${cleanName}_${uniqueSuffix}.${extension}`;
 
     try {
+      // 4. Subimos a Supabase
+      // Ya no necesitamos upsert: true porque cada nombre es único
       const { error: uploadError } = await supabase.storage
         .from("templates")
-        .upload(filePath, file, { cacheControl: "3600", upsert: false });
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
 
       if (uploadError) {
         console.error("Error subiendo archivo:", uploadError.message);
@@ -166,6 +182,7 @@ export function useTemplates() {
         .from("templates")
         .getPublicUrl(filePath);
 
+      // 5. Creamos el registro en la base de datos
       const { data: insertedRows, error: insertError } = await supabase
         .from("templates")
         .insert({
@@ -177,7 +194,6 @@ export function useTemplates() {
           company_id: form.company_id || null,
           homologation_type_id: form.homologation_type_id || null,
           active: true,
-          // AQUÍ ESTÁ EL CAMBIO: usamos el mapping que viene del formulario
           mapping: form.mapping || {},
           preview_url: null,
         })
@@ -188,17 +204,18 @@ export function useTemplates() {
 
       if (insertError) {
         console.error("Error creando el registro:", insertError.message);
-        await deleteTemplateFile(filePath);
+        // Limpiamos el archivo subido si falla la base de datos
+        await supabase.storage.from("templates").remove([filePath]);
         setUploading(false);
         return;
       }
 
-      // Actualizamos el estado local agregando la nueva plantilla
       setTemplates((prev) => [insertedRows, ...prev]);
 
       onDone();
       setUploading(false);
 
+      // 6. Generación de preview (usando la nueva ruta única)
       triggerPreviewGeneration(insertedRows.id, filePath, (previewUrl) => {
         setTemplates((prev) =>
           prev.map((t) =>
@@ -214,12 +231,31 @@ export function useTemplates() {
 
   const deleteTemplate = async (id: string, filePath: string) => {
     try {
-      await deleteTemplateFile(filePath);
-      await supabase.storage.from("templates").remove([`previews/${id}.pdf`]);
-      const { error } = await supabase.from("templates").delete().eq("id", id);
-      if (error) console.error("Error eliminando:", error.message);
+      // 1. Borrar ambos archivos del Storage (el .docx y el .pdf de preview)
+      // Usamos un array para borrar ambos en una sola petición al servidor
+      const { error: storageError } = await supabase.storage
+        .from("templates")
+        .remove([filePath, `previews/${id}.pdf`]);
+
+      if (storageError) {
+        console.error(
+          "Error borrando archivos del Storage:",
+          storageError.message,
+        );
+        // Opcional: tirar error aquí si quieres detener la eliminación de la base de datos
+      }
+
+      // 2. Borrar el registro de la Base de Datos
+      const { error: dbError } = await supabase
+        .from("templates")
+        .delete()
+        .eq("id", id);
+
+      if (dbError) {
+        console.error("Error borrando registro de la BD:", dbError.message);
+      }
     } catch (err) {
-      console.error("Error en eliminación:", err);
+      console.error("Error crítico en eliminación:", err);
     }
   };
 

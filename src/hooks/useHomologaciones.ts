@@ -94,8 +94,14 @@ export function useHomologaciones() {
         if (error) throw error;
       }
       await fetchData();
-    } catch (err) {
-      console.error("Error al guardar:", err);
+    } catch (err: any) {
+      // Convertimos a JSON para ver las propiedades internas que console.error oculta
+      console.error("Error al guardar:", JSON.stringify(err, null, 2));
+
+      // Si err tiene un mensaje, lo mostramos
+      if (err.message) console.error("Mensaje:", err.message);
+      if (err.details) console.error("Detalles:", err.details);
+
       throw err;
     }
   };

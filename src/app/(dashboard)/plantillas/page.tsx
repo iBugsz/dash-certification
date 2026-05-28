@@ -20,6 +20,7 @@ import { PreviewDrawer } from "@/components/features/certificates/PreviewDrawer"
 import { PresetManager } from "@/components/features/templates/PresetManager";
 import { Template, MappingField } from "@/lib/types/database";
 import { supabase } from "@/lib/supabase";
+import { DeleteModal } from "@/components/ui/DeleteModal";
 
 interface SimpleHomologationType {
   id: string;
@@ -120,47 +121,67 @@ export default function TemplatesPage() {
 
   return (
     <div className="w-full max-w-screen-2xl mx-auto p-4 md:p-8 space-y-6 text-slate-900 dark:text-slate-100 font-poppins">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-            Plantillas Word
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">
-            Sube y gestiona tus archivos .docx con etiquetas de mapeo.
-          </p>
-        </div>
-        
-        <div className="flex gap-3">
-          <button
-            onClick={() => setShowPresetManager(true)}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl font-semibold hover:bg-slate-200 transition-all text-sm"
-          >
-            <Tag className="w-4 h-4" />
-            Gestionar Tags
-          </button>
-          <button
-            onClick={() => setShowModal(true)}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all active:scale-95 text-sm"
-          >
-            <Plus className="w-4 h-4" />
-            Subir Plantilla
-          </button>
-        </div>
+
+    {/* Header completo */}
+    <div className="flex flex-col gap-6">
+      {/* Título y descripción */}
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          Plantillas Word
+        </h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm">
+          Sube y gestiona tus archivos .docx con etiquetas de mapeo.
+        </p>
       </div>
 
-      {/* Buscador */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por nombre o empresa..."
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm"
-        />
-      </div>
+      {/* Fila de controles: Buscador + Botones minimalistas */}
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Buscador */}
+        <div className="relative flex-grow max-w-lg">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por nombre o empresa..."
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-sm"
+          />
+        </div>
 
+        {/* Botones Icon-Only Compactos */}
+        <div className="flex items-center gap-1.5 ml-auto">
+          
+          {/* Botón Gestionar Tags */}
+          <div className="group relative">
+            <button
+              onClick={() => setShowPresetManager(true)}
+              className="cursor-pointer p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            >
+              <Tag className="w-4 h-4" />
+            </button>
+            {/* Tooltip arriba centrado */}
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-slate-900 text-white text-xs font-medium rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+              Gestionar Tags
+            </div>
+          </div>
+
+          {/* Botón Subir Plantilla */}
+          <div className="group relative">
+            <button
+              onClick={() => setShowModal(true)}
+              className="cursor-pointer p-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors active:scale-95"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+            {/* Tooltip arriba centrado */}
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-slate-900 text-white text-xs font-medium rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+              Subir Plantilla
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
       {/* Grid de cards */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -265,28 +286,14 @@ export default function TemplatesPage() {
         </div>
       )}
 
-      {/* MODAL: CONFIRMAR BORRADO */}
-      {templateToDelete && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[28px] shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in zoom-in-95">
-            <div className="p-6 text-center">
-              <div className="mx-auto w-14 h-14 bg-red-50 dark:bg-red-950/30 rounded-full flex items-center justify-center mb-4">
-                <AlertTriangle className="w-7 h-7 text-red-500" />
-              </div>
-              <h3 className="text-lg font-bold mb-1">¿Eliminar plantilla?</h3>
-              <p className="text-slate-500 dark:text-slate-400 text-sm">
-                Estás a punto de eliminar "{templateToDelete.name}". Esta acción no se puede deshacer.
-              </p>
-            </div>
-            <div className="flex gap-3 p-6 pt-0">
-              <button onClick={() => setTemplateToDelete(null)} className="flex-1 px-4 py-2.5 rounded-xl font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-sm">Cancelar</button>
-              <button onClick={handleConfirmDelete} className="flex-1 px-4 py-2.5 rounded-xl font-semibold bg-red-500 text-white hover:bg-red-600 transition-all text-sm flex items-center justify-center gap-2">
-                <Trash2 className="w-4 h-4" /> Eliminar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteModal 
+        isOpen={!!templateToDelete}
+        onClose={() => setTemplateToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="¿Eliminar plantilla?"
+        message={`Estás a punto de eliminar "${templateToDelete?.name}". Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+      />
     </div>
   );
 }
