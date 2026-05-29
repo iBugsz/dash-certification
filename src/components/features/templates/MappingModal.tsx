@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Trash2, Type, ImageIcon, Hash, Layers } from "lucide-react";
+import { X, Trash2, Type, ImageIcon, Hash, Layers, AlertTriangle } from "lucide-react";
 import { MappingField, FieldType, FieldFormat, CaseFormat } from "@/lib/types/database";
 import { supabase } from "@/lib/supabase";
 
@@ -237,6 +237,11 @@ export default function MappingModal({ template, onClose, onSave }: MappingModal
   // States para Presets
   const [presets, setPresets] = useState<any[]>([]);
   const [selectedPreset, setSelectedPreset] = useState("");
+  
+  // Estado para el modal de conflicto
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [pendingTags, setPendingTags] = useState<any>(null);
+  const [conflictingNames, setConflictingNames] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchPresets = async () => {
@@ -255,11 +260,36 @@ export default function MappingModal({ template, onClose, onSave }: MappingModal
     const conflicts = Object.keys(newTags).filter(tag => existingTags.includes(tag));
 
     if (conflicts.length > 0) {
-      if (!window.confirm(`Los siguientes tags ya existen: ${conflicts.join(", ")}. ¿Deseas sobrescribirlos?`)) {
-        return;
-      }
+      setConflictingNames(conflicts);
+      setPendingTags(newTags); // Guardamos el objeto completo del preset
+      setShowConflictModal(true);
+      return;
     }
+    
+    // Si no hay conflictos, simplemente añadimos todo
     setMapping(prev => ({ ...prev, ...newTags }));
+  };
+
+  const confirmOverwrite = (shouldOverwrite: boolean) => {
+    if (shouldOverwrite) {
+      // Sobrescribe todo incluyendo los que ya existían
+      setMapping(prev => ({ ...prev, ...pendingTags }));
+    } else {
+      // SOLO añade los que NO existen en el mapping actual
+      setMapping(prev => {
+        const newMapping = { ...prev };
+        Object.entries(pendingTags).forEach(([tag, field]) => {
+          if (!newMapping[tag]) { // Solo si NO existe, lo agregamos
+            newMapping[tag] = field as MappingField;
+          }
+        });
+        return newMapping;
+      });
+    }
+    
+    setShowConflictModal(false);
+    setPendingTags(null);
+    setConflictingNames([]);
   };
 
   const addField = () => {
@@ -281,10 +311,59 @@ export default function MappingModal({ template, onClose, onSave }: MappingModal
   const textFields = entries.filter(([, f]) => f.type === "text");
   const numberFields = entries.filter(([, f]) => f.type === "number");
   const imageFields = entries.filter(([, f]) => f.type === "image");
-  const missingCount = entries.filter(([, f]) => isMissing(f)).length;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 font-poppins">
+      
+     {/* --- Warning Modal --- */}
+      {showConflictModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-[300px] border border-slate-200 dark:border-slate-800 overflow-hidden">
+            
+            <div className="flex justify-end pt-3 pr-3">
+              <button 
+                onClick={() => setShowConflictModal(false)} 
+                className="cursor-pointer text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-5 pt-0">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex-shrink-0">
+                  <AlertTriangle size={15} className="text-amber-500" />
+                </div>
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  Tags existentes
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Los siguientes tags ya existen: <span className="font-mono text-slate-700 dark:text-slate-300">{conflictingNames.join(", ")}</span>.
+              </p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed mt-1.5">
+                ¿Deseas sobrescribirlos o solo agregar los que faltan?
+              </p>
+            </div>
+            
+            <div className="flex gap-2 px-4 pb-4">
+              <button
+                onClick={() => confirmOverwrite(false)} 
+                className="flex-1 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                Solo nuevos
+              </button>
+              <button
+                onClick={() => confirmOverwrite(true)} 
+                className="flex-1 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Sobrescribir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         
         <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
@@ -295,7 +374,6 @@ export default function MappingModal({ template, onClose, onSave }: MappingModal
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X size={15} /></button>
         </div>
 
-        {/* Selector de Presets */}
         <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2">
           <Layers size={14} className="text-slate-400" />
           <select 
