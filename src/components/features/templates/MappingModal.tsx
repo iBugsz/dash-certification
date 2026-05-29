@@ -243,6 +243,24 @@ export default function MappingModal({ template, onClose, onSave }: MappingModal
   const [pendingTags, setPendingTags] = useState<any>(null);
   const [conflictingNames, setConflictingNames] = useState<string[]>([]);
 
+  // Estados para control de cambios
+  const [hasChanges, setHasChanges] = useState(false);
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+
+  useEffect(() => {
+    const original = JSON.stringify(template.mapping || {});
+    const current = JSON.stringify(mapping);
+    setHasChanges(original !== current);
+  }, [mapping, template.mapping]);
+
+  const handleClose = () => {
+    if (hasChanges) {
+      setShowDiscardModal(true);
+    } else {
+      onClose();
+    }
+  };
+
   useEffect(() => {
     const fetchPresets = async () => {
       const { data } = await supabase.from("tag_presets").select("id, name, tags");
@@ -261,25 +279,22 @@ export default function MappingModal({ template, onClose, onSave }: MappingModal
 
     if (conflicts.length > 0) {
       setConflictingNames(conflicts);
-      setPendingTags(newTags); // Guardamos el objeto completo del preset
+      setPendingTags(newTags);
       setShowConflictModal(true);
       return;
     }
     
-    // Si no hay conflictos, simplemente añadimos todo
     setMapping(prev => ({ ...prev, ...newTags }));
   };
 
   const confirmOverwrite = (shouldOverwrite: boolean) => {
     if (shouldOverwrite) {
-      // Sobrescribe todo incluyendo los que ya existían
       setMapping(prev => ({ ...prev, ...pendingTags }));
     } else {
-      // SOLO añade los que NO existen en el mapping actual
       setMapping(prev => {
         const newMapping = { ...prev };
         Object.entries(pendingTags).forEach(([tag, field]) => {
-          if (!newMapping[tag]) { // Solo si NO existe, lo agregamos
+          if (!newMapping[tag]) {
             newMapping[tag] = field as MappingField;
           }
         });
@@ -315,63 +330,52 @@ export default function MappingModal({ template, onClose, onSave }: MappingModal
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 font-poppins">
       
-     {/* --- Warning Modal --- */}
+      {/* --- Discard Confirmation Modal --- */}
+      {showDiscardModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-[300px] border border-slate-200 dark:border-slate-800 p-5">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-2">¿Descartar cambios?</h3>
+            <p className="text-xs text-slate-500 mb-5">Has realizado modificaciones sin guardar. ¿Seguro que deseas salir?</p>
+            <div className="flex gap-2">
+              <button onClick={() => setShowDiscardModal(false)} className="cursor-pointer flex-1 py-2 rounded-xl border border-slate-200 text-slate-500 text-xs font-semibold hover:bg-slate-50">Seguir editando</button>
+              <button onClick={onClose} className="cursor-pointer flex-1 py-2 rounded-xl bg-red-500 text-white text-xs font-semibold hover:bg-red-600">Descartar</button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* --- Conflict Modal --- */}
       {showConflictModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-[300px] border border-slate-200 dark:border-slate-800 overflow-hidden">
-            
             <div className="flex justify-end pt-3 pr-3">
-              <button 
-                onClick={() => setShowConflictModal(false)} 
-                className="cursor-pointer text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-              >
-                <X size={16} />
-              </button>
+              <button onClick={() => setShowConflictModal(false)} className="cursor-pointer text-red-400 hover:text-red-600 dark:hover:text-slate-200 transition-colors"><X size={16} /></button>
             </div>
-
             <div className="p-5 pt-0">
               <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex-shrink-0">
-                  <AlertTriangle size={15} className="text-amber-500" />
-                </div>
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  Tags existentes
-                </span>
+                <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex-shrink-0"><AlertTriangle size={15} className="text-amber-500" /></div>
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Tags existentes</span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Los siguientes tags ya existen: <span className="font-mono text-slate-700 dark:text-slate-300">{conflictingNames.join(", ")}</span>.
-              </p>
-              <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed mt-1.5">
-                ¿Deseas sobrescribirlos o solo agregar los que faltan?
-              </p>
+           <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+  Los tags <span className="font-mono text-slate-700 dark:text-slate-300 font-bold">{conflictingNames.join(", ")}</span> ya existen. 
+  <span className="block mt-1">¿Deseas sobrescribirlos o conservar los valores actuales?</span>
+</p>
             </div>
-            
             <div className="flex gap-2 px-4 pb-4">
-              <button
-                onClick={() => confirmOverwrite(false)} 
-                className="flex-1 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              >
-                Solo nuevos
-              </button>
-              <button
-                onClick={() => confirmOverwrite(true)} 
-                className="flex-1 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold transition-colors cursor-pointer"
-              >
-                Sobrescribir
-              </button>
+              <button onClick={() => confirmOverwrite(false)} className="flex-1 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">Solo nuevos</button>
+              <button onClick={() => confirmOverwrite(true)} className="flex-1 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold transition-colors cursor-pointer">Sobrescribir</button>
             </div>
           </div>
         </div>
       )}
 
-      <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-        
+      <div className="bg-white dark:bg-slate-900 w-full max-w-xl h-[600px] flex flex-col rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
           <div>
             <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Configurar mapeo</p>
             <p className="text-[11px] text-slate-500 dark:text-slate-400">{template.name}</p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X size={15} /></button>
+          <button onClick={handleClose} className="cursor-pointer text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X size={15} /></button>
         </div>
 
         <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2">
@@ -403,9 +407,16 @@ export default function MappingModal({ template, onClose, onSave }: MappingModal
           </div>
         </div>
 
-        <div className="max-h-[52vh] overflow-y-auto">
-          {entries.length === 0 && <p className="text-center text-xs text-slate-400 py-8">Sin campos aún.</p>}
-          {unknownFields.length > 0 && (
+        <div className="flex-1 overflow-y-auto flex flex-col">
+            {entries.length === 0 && (
+              <div className="flex-1 flex items-center justify-center">
+                <p className="text-center text-xs text-slate-400">Sin campos aún.</p>
+              </div>
+            )}
+            
+            {/* El resto de tus secciones (unknownFields, textFields, etc.) 
+                seguirán funcionando normalmente aquí debajo */}
+            {unknownFields.length > 0 && (
             <>
               <div className="px-4 py-1.5 bg-slate-50 border-b text-[10px] font-semibold text-slate-400">PENDIENTES</div>
               {unknownFields.map(([tag, field]) => <FieldRow key={tag} tag={tag} field={field} isOpen={openTag === tag} onToggle={() => toggleTag(tag)} onChange={(u) => updateField(tag, u)} onRemove={() => removeField(tag)} />)}
@@ -432,7 +443,7 @@ export default function MappingModal({ template, onClose, onSave }: MappingModal
         </div>
 
         <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-xs text-slate-500 hover:text-slate-700">Cancelar</button>
+          <button onClick={handleClose} className="cursor-pointer px-4 py-2 text-xs text-slate-500 hover:text-slate-700">Cancelar</button>
           <button onClick={async () => { setIsSaving(true); await onSave(template.id, mapping); onClose(); }} disabled={isSaving} className="cursor-pointer ml-auto px-5 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50">
             {isSaving ? "Guardando..." : "Guardar"}
           </button>
