@@ -154,7 +154,7 @@ export default function CertificatesPage() {
         {currentStep === 1 && (
           <div className="animate-in fade-in duration-500">
             <div className="mb-10">
-              <h2 className="text-2xl font-bold">Configurar Plantilla</h2>
+              <h2 className="text-2xl font-bold">Configurar Plantilla Prueba</h2>
               <p className="opacity-70 text-sm">
                 Selecciona los parámetros para iniciar.
               </p>
