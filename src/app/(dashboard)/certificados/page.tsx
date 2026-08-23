@@ -73,7 +73,7 @@ export default function CertificatesPage() {
     const url = window.URL.createObjectURL(wordGenerated);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `Certificado_${selectedCompany?.name.replace(/\s+/g, "_") || "Documento"}.docx`;
+    link.download = `Explicacion Centro Gravedad") || "Documento"}.docx`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
