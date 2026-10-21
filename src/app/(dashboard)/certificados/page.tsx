@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useCertificates } from "@/hooks/useCertificates";
-import { ChevronRight, ChevronLeft, Tag } from "lucide-react";
+import { ChevronRight, ChevronLeft } from "lucide-react";
 import { CertificateSelectors } from "@/components/features/certificates/CertificateSelectors";
 import { ExcelDropzone } from "@/components/features/certificates/ExcelDropzone";
 import { ImageUploadSection } from "@/components/features/certificates/ImageUploadSection";
@@ -35,11 +35,14 @@ export default function CertificatesPage() {
     isProcessing,
     isMapped,
     pdfUrl,
+    isGenerated,
+    pdfUnavailable,
     handleAnalyze,
     handleGenerate,
     handleDownload,
     setPdfUrl,
     setIsMapped,
+    setIsGenerated,
     setWordGenerated,
     wordGenerated,
   } = hookData;
@@ -61,6 +64,7 @@ export default function CertificatesPage() {
     setSelectedTemplate(null);
     setSelectedCompany(null);
     setPdfUrl(null);
+    setIsGenerated(false);
     setIsMapped(false);
     setWordGenerated(null);
   };
@@ -111,20 +115,22 @@ export default function CertificatesPage() {
     return () => clearInterval(interval);
   }, [isProcessing]);
 
+  // ✅ Usa isGenerated (no pdfUrl) para evitar bucle si el PDF falla
   useEffect(() => {
-    if (isMapped && !pdfUrl && isAutoExecuting.current && !isProcessing) {
+    if (isMapped && !isGenerated && isAutoExecuting.current && !isProcessing) {
       handleGenerate();
     }
-  }, [isMapped, pdfUrl, isProcessing, handleGenerate]);
+  }, [isMapped, isGenerated, isProcessing, handleGenerate]);
 
+  // ✅ Pasa al paso 3 haya PDF o solo Word
   useEffect(() => {
-    if (pdfUrl && currentStep === 2) {
+    if (isGenerated && currentStep === 2) {
       setStep3Revealed(false);
       setCurrentStep(3);
       isAutoExecuting.current = false;
       setTimeout(() => setStep3Revealed(true), 50);
     }
-  }, [pdfUrl, currentStep]);
+  }, [isGenerated, currentStep]);
 
   return (
     <div
@@ -134,8 +140,7 @@ export default function CertificatesPage() {
         color: "var(--foreground)",
       }}
     >
-     <div className="flex justify-center items-center max-w-4xl mx-auto px-4">
-        {/* Ajustamos el ancho para que el stepper pueda expandir sus líneas */}
+      <div className="flex justify-center items-center max-w-4xl mx-auto px-4">
         <div className="w-full max-w-sm">
           <CertificateStepper
             currentStep={currentStep}
@@ -205,6 +210,7 @@ export default function CertificatesPage() {
         {currentStep === 3 && (
           <Step3Success
             step3Revealed={step3Revealed}
+            pdfUnavailable={pdfUnavailable}
             onPreview={() => setShowPreview(true)}
             onDownloadPdf={handleDownload}
             onDownloadWord={handleDownloadWordLocal}

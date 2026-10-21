@@ -55,13 +55,20 @@ export async function POST(request: Request) {
       },
     });
   } catch (error: any) {
-    console.error("❌ Error crítico en convert-to-pdf:", error);
-    // Si entra aquí, Supabase NUNCA se enteró, por lo tanto no sube el contador.
+    console.error("❌ Error en convert-to-pdf:", error);
+
+    const isQuota =
+      error?._statusCode === 429 || error?._errorCode === "Quota Exceeded";
+
+    if (isQuota) {
+      return NextResponse.json(
+        { pdfAvailable: false, code: "PDF_UNAVAILABLE" },
+        { status: 503 },
+      );
+    }
+
     return NextResponse.json(
-      {
-        error: "Error en el servidor de PDF",
-        details: error.message,
-      },
+      { error: "Error en el servidor de PDF", details: error.message },
       { status: 500 },
     );
   }
