@@ -1,194 +1,266 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
-import type { Company, Template } from "@/lib/types/database";
-import { extractExcelData } from "@/services/excel-service";
-import { generateWordDocument, fileToBase64 } from "@/services/docx-service";
-import { convertToPdf } from "@/services/pdf-service";
+import { useState, useEffect, useRef } from "react";
+import { useCertificates } from "@/hooks/useCertificates";
+import { ChevronRight, ChevronLeft } from "lucide-react";
+import { CertificateSelectors } from "@/components/features/certificates/CertificateSelectors";
+import { ExcelDropzone } from "@/components/features/certificates/ExcelDropzone";
+import { ImageUploadSection } from "@/components/features/certificates/ImageUploadSection";
+import { PreviewDrawer } from "@/components/features/certificates/PreviewDrawer";
+import { CertificateStepper } from "@/components/features/certificates/CertificateStepper";
+import { ProcessingOverlay } from "@/components/features/certificates/ProcessingOverlay";
+import { Step3Success } from "@/components/features/certificates/Step3Success";
+import { PresetManager } from "@/components/features/templates/PresetManager";
+import { Button } from "@/components/ui/button";
 
-export function useCertificates() {
-  // --- ESTADOS DE ARCHIVOS Y SELECCIÓN ---
-  const [excelFile, setExcelFile] = useState<File | null>(null);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  const [loadingCompanies, setLoadingCompanies] = useState(true);
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
-    null,
-  );
-  const [loadingTemplates, setLoadingTemplates] = useState(false);
+export default function CertificatesPage() {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [showPreview, setShowPreview] = useState(false);
+  const [showPresetManager, setShowPresetManager] = useState(false);
+  const [imageFiles, setImageFiles] = useState<Record<string, File>>({});
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [step3Revealed, setStep3Revealed] = useState(false);
+  const isAutoExecuting = useRef(false);
 
-  // --- ESTADOS DEL PROCESO ---
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isMapped, setIsMapped] = useState(false);
-  const [isGenerated, setIsGenerated] = useState(false);
-  const [pdfUnavailable, setPdfUnavailable] = useState(false);
-  const [wordGenerated, setWordGenerated] = useState<Blob | null>(null);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [processError, setProcessError] = useState<string | null>(null);
-  const [processWarning, setProcessWarning] = useState<string | null>(null);
-
-  // --- CARGA DE DATOS (Supabase) ---
-  useEffect(() => {
-    async function fetchCompanies() {
-      const { data, error } = await supabase
-        .from("companies")
-        .select("*")
-        .eq("active", true)
-        .order("name");
-      if (!error && data) setCompanies(data);
-      setLoadingCompanies(false);
-    }
-    fetchCompanies();
-  }, []);
-
-  useEffect(() => {
-    if (!selectedCompany) {
-      setTemplates([]);
-      return;
-    }
-    async function fetchTemplates() {
-      setLoadingTemplates(true);
-      const { data, error } = await supabase
-        .from("templates")
-        .select("*, homologation_type:homologation_types(id, name, icon)")
-        .eq("company_id", selectedCompany?.id)
-        .eq("active", true)
-        .order("name");
-      if (!error && data) setTemplates(data);
-      setLoadingTemplates(false);
-    }
-    fetchTemplates();
-  }, [selectedCompany]);
-
-  // --- ACCIONES PRINCIPALES ---
-
-  /**
-   * PASO 1: Analiza el Excel y genera el documento Word en memoria
-   */
-  const handleAnalyze = useCallback(
-    async (imageFiles: Record<string, File>) => {
-      if (!excelFile || !selectedTemplate) return;
-      setIsProcessing(true);
-      setProcessError(null);
-      setIsGenerated(false);
-      setPdfUnavailable(false);
-
-      try {
-        // 1. Extraer datos del Excel usando el servicio
-        const { finalData } = await extractExcelData(
-          excelFile,
-          selectedTemplate.mapping,
-        );
-
-        // 2. Convertir imágenes a Base64
-        const imageData: Record<string, string> = {};
-        for (const [tag, file] of Object.entries(imageFiles)) {
-          if (file) {
-            const cleanTag = tag.replace(/[^a-zA-Z0-9]/g, "").trim();
-            imageData[cleanTag] = await fileToBase64(file);
-          }
-        }
-
-        // 3. Generar el Word usando el servicio de DOCX
-        const mergedData = { ...finalData, ...imageData };
-        const generatedBlob = await generateWordDocument(
-          selectedTemplate.file_url!,
-          mergedData,
-        );
-
-        setWordGenerated(generatedBlob);
-        setIsMapped(true);
-      } catch (err: any) {
-        setProcessError(err.message || "Error al procesar los documentos");
-      } finally {
-        setIsProcessing(false);
-      }
-    },
-    [excelFile, selectedTemplate],
-  );
-
-  /**
-   * PASO 2: Envía el Word generado al servidor para convertirlo a PDF
-   */
-  const handleGenerate = useCallback(async () => {
-    if (!wordGenerated) return;
-    setIsProcessing(true);
-    setProcessError(null);
-    setPdfUnavailable(false);
-
-    try {
-      // 1. Convertir a PDF usando el servicio (este servicio también registra la métrica)
-      const pdfBlob = await convertToPdf(wordGenerated);
-
-      // El servicio puede devolver null si el PDF no está disponible
-      if (!pdfBlob) {
-        setPdfUnavailable(true);
-        setIsGenerated(true); // Pasa al paso 3 solo con Word y evita el bucle
-        return;
-      }
-
-      // 2. Crear URL para visualización/descarga
-      const url = window.URL.createObjectURL(pdfBlob);
-      setPdfUrl(url);
-      setIsGenerated(true);
-    } catch (err: any) {
-      setPdfUnavailable(true);
-      setProcessError(err.message || "Error en la conversión a PDF");
-      setIsGenerated(true); // Pasa al paso 3 solo con Word y evita el bucle
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [wordGenerated]);
-
-  /**
-   * PASO 3: Descarga el PDF final
-   */
-  const handleDownload = useCallback(() => {
-    if (!pdfUrl) return;
-
-    const link = document.createElement("a");
-    link.href = pdfUrl;
-    link.download = `Certificado_${
-      selectedCompany?.name.replace(/\s+/g, "_") || "Generado"
-    }.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }, [pdfUrl, selectedCompany]);
-
-  return {
-    // Datos y Selección
+  const hookData = useCertificates();
+  const {
     excelFile,
     setExcelFile,
     companies,
     selectedCompany,
     setSelectedCompany,
-    loadingCompanies,
     templates,
     selectedTemplate,
     setSelectedTemplate,
-    loadingTemplates,
-
-    // Estados de UI
     isProcessing,
     isMapped,
+    pdfUrl,
     isGenerated,
     pdfUnavailable,
-    pdfUrl,
-    processError,
-    processWarning,
-    isReady: !!(selectedCompany && selectedTemplate && excelFile),
-    wordGenerated,
-
-    // Funciones
     handleAnalyze,
     handleGenerate,
     handleDownload,
+    setPdfUrl,
     setIsMapped,
     setIsGenerated,
     setWordGenerated,
-    setPdfUrl,
+    wordGenerated,
+  } = hookData;
+
+  const getStepperWidth = () => {
+    if (currentStep === 1) return "0%";
+    if (currentStep === 3) return "100%";
+    return isProcessing ? `${50 + processingProgress / 2.5}%` : "50%";
   };
+
+  const handleResetAll = () => {
+    setCurrentStep(1);
+    setShowPreview(false);
+    setImageFiles({});
+    setProcessingProgress(0);
+    setStep3Revealed(false);
+    isAutoExecuting.current = false;
+    setExcelFile(null);
+    setSelectedTemplate(null);
+    setSelectedCompany(null);
+    setPdfUrl(null);
+    setIsGenerated(false);
+    setIsMapped(false);
+    setWordGenerated(null);
+  };
+
+  const handleDownloadWordLocal = () => {
+    if (!wordGenerated) {
+      console.error("No hay ningún archivo Word generado.");
+      return;
+    }
+    const url = window.URL.createObjectURL(wordGenerated);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Explicacion Centro Gravedad.docx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleFullProcess = async () => {
+    if (isProcessing) return;
+    isAutoExecuting.current = true;
+    try {
+      await handleAnalyze(imageFiles);
+    } catch (error) {
+      console.error("Error:", error);
+      isAutoExecuting.current = false;
+    }
+  };
+
+  const imageTags = selectedTemplate?.mapping
+    ? Object.entries(selectedTemplate.mapping)
+        .filter(([_, value]: any) => value.type === "image")
+        .map(([key, value]: any) => ({ tag: key, label: value.label }))
+    : [];
+
+  const hasImages = imageTags.length > 0;
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isProcessing) {
+      interval = setInterval(() => {
+        setProcessingProgress((prev) => (prev < 95 ? prev + 1 : prev));
+      }, 150);
+    } else {
+      setProcessingProgress(0);
+    }
+    return () => clearInterval(interval);
+  }, [isProcessing]);
+
+  // Usa isGenerated (no pdfUrl) para evitar bucle si el PDF falla
+  useEffect(() => {
+    if (isMapped && !isGenerated && isAutoExecuting.current && !isProcessing) {
+      handleGenerate();
+    }
+  }, [isMapped, isGenerated, isProcessing, handleGenerate]);
+
+  // Pasa al paso 3 haya PDF o solo Word
+  useEffect(() => {
+    if (isGenerated && currentStep === 2) {
+      setStep3Revealed(false);
+      setCurrentStep(3);
+      isAutoExecuting.current = false;
+      setTimeout(() => setStep3Revealed(true), 50);
+    }
+  }, [isGenerated, currentStep]);
+
+  return (
+    <div
+      className="p-4 md:p-8 space-y-10 min-h-screen transition-colors duration-300"
+      style={{
+        backgroundColor: "var(--background)",
+        color: "var(--foreground)",
+      }}
+    >
+      <div className="flex justify-center items-center max-w-4xl mx-auto px-4">
+        <div className="w-full max-w-sm">
+          <CertificateStepper
+            currentStep={currentStep}
+            isProcessing={isProcessing}
+            getStepperWidth={getStepperWidth}
+          />
+        </div>
+      </div>
+
+      <div
+        className="rounded-[40px] p-8 md:p-12 shadow-2xl min-h-[520px] max-w-4xl mx-auto relative overflow-hidden transition-colors duration-300 border"
+        style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
+      >
+        {isProcessing && <ProcessingOverlay progress={processingProgress} />}
+
+        {currentStep === 1 && (
+          <div className="animate-in fade-in duration-500">
+            <div className="mb-10">
+              <h1 className="text-2xl font-bold">Configurar Plantilla</h1>
+              <p className="opacity-70 text-sm">
+                Selecciona los parámetros para iniciar.
+              </p>
+            </div>
+            <CertificateSelectors
+              companies={companies}
+              selectedCompany={selectedCompany}
+              setSelectedCompany={setSelectedCompany}
+              templates={templates}
+              selectedTemplate={selectedTemplate}
+              setSelectedTemplate={setSelectedTemplate}
+              onViewTemplate={() => setShowPreview(true)}
+            />
+          </div>
+        )}
+
+        {currentStep === 2 && (
+          <div className="animate-in fade-in duration-500 space-y-10">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold">Carga de Datos</h2>
+              <p className="text-sm opacity-60">
+                Sube tu archivo .xlsx y fotografías.
+              </p>
+            </div>
+            <div className="max-w-2xl mx-auto">
+              <ExcelDropzone
+                onFileSelect={setExcelFile}
+                currentFile={excelFile}
+              />
+            </div>
+            {hasImages && (
+              <div
+                className="pt-10 border-t"
+                style={{ borderColor: "var(--border)" }}
+              >
+                <ImageUploadSection
+                  imageTags={imageTags}
+                  imageFiles={imageFiles}
+                  onImageUpload={(tag, file) =>
+                    setImageFiles((p) => ({ ...p, [tag]: file }))
+                  }
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {currentStep === 3 && (
+          <Step3Success
+            step3Revealed={step3Revealed}
+            pdfUnavailable={pdfUnavailable}
+            onPreview={() => setShowPreview(true)}
+            onDownloadPdf={handleDownload}
+            onDownloadWord={handleDownloadWordLocal}
+            onReset={handleResetAll}
+          />
+        )}
+      </div>
+
+      {!isProcessing && currentStep < 3 && (
+        <div className="flex justify-between items-center max-w-4xl mx-auto">
+          <Button
+            variant="ghost"
+            disabled={currentStep === 1}
+            onClick={() => setCurrentStep((p) => p - 1)}
+            className="rounded-xl font-bold opacity-60 cursor-pointer"
+          >
+            <ChevronLeft className="mr-2 w-4 h-4" /> Atrás
+          </Button>
+
+          <Button
+            onClick={
+              currentStep === 2 ? handleFullProcess : () => setCurrentStep(2)
+            }
+            disabled={
+              (currentStep === 1 && !selectedTemplate) ||
+              (currentStep === 2 && (!excelFile || isProcessing))
+            }
+            className="px-10 py-6 rounded-2xl font-black text-white shadow-xl active:scale-95 transition-all cursor-pointer"
+            style={{ backgroundColor: "var(--accent)" }}
+          >
+            <div className="flex items-center gap-2">
+              <span>Siguiente</span>
+              <ChevronRight className="w-5 h-5" />
+            </div>
+          </Button>
+        </div>
+      )}
+
+      <PreviewDrawer
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        selectedTemplate={selectedTemplate}
+        pdfUrl={pdfUrl}
+        isProcessing={isProcessing}
+        isMapped={isMapped}
+      />
+
+      {showPresetManager && (
+        <PresetManager onClose={() => setShowPresetManager(false)} />
+      )}
+    </div>
+  );
 }
