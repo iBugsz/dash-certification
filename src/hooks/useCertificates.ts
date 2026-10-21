@@ -122,6 +122,13 @@ export function useCertificates() {
       // 1. Convertir a PDF usando el servicio (este servicio también registra la métrica)
       const pdfBlob = await convertToPdf(wordGenerated);
 
+      // El servicio puede devolver null si el PDF no está disponible
+      if (!pdfBlob) {
+        setPdfUnavailable(true);
+        setIsGenerated(true); // Pasa al paso 3 solo con Word y evita el bucle
+        return;
+      }
+
       // 2. Crear URL para visualización/descarga
       const url = window.URL.createObjectURL(pdfBlob);
       setPdfUrl(url);
@@ -129,6 +136,7 @@ export function useCertificates() {
     } catch (err: any) {
       setPdfUnavailable(true);
       setProcessError(err.message || "Error en la conversión a PDF");
+      setIsGenerated(true); // Pasa al paso 3 solo con Word y evita el bucle
     } finally {
       setIsProcessing(false);
     }
