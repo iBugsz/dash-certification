@@ -22,13 +22,14 @@ export function useCertificates() {
   // --- ESTADOS DEL PROCESO ---
   const [isProcessing, setIsProcessing] = useState(false);
   const [isMapped, setIsMapped] = useState(false);
+  const [isGenerated, setIsGenerated] = useState(false);
+  const [pdfUnavailable, setPdfUnavailable] = useState(false);
   const [wordGenerated, setWordGenerated] = useState<Blob | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [processError, setProcessError] = useState<string | null>(null);
   const [processWarning, setProcessWarning] = useState<string | null>(null);
 
   // --- CARGA DE DATOS (Supabase) ---
-  // ✅ fetchCompanies — sin cambios
   useEffect(() => {
     async function fetchCompanies() {
       const { data, error } = await supabase
@@ -42,7 +43,6 @@ export function useCertificates() {
     fetchCompanies();
   }, []);
 
-  // ✅ fetchTemplates — con el join agregado
   useEffect(() => {
     if (!selectedCompany) {
       setTemplates([]);
@@ -72,6 +72,8 @@ export function useCertificates() {
       if (!excelFile || !selectedTemplate) return;
       setIsProcessing(true);
       setProcessError(null);
+      setIsGenerated(false);
+      setPdfUnavailable(false);
 
       try {
         // 1. Extraer datos del Excel usando el servicio
@@ -114,6 +116,7 @@ export function useCertificates() {
     if (!wordGenerated) return;
     setIsProcessing(true);
     setProcessError(null);
+    setPdfUnavailable(false);
 
     try {
       // 1. Convertir a PDF usando el servicio (este servicio también registra la métrica)
@@ -122,7 +125,9 @@ export function useCertificates() {
       // 2. Crear URL para visualización/descarga
       const url = window.URL.createObjectURL(pdfBlob);
       setPdfUrl(url);
+      setIsGenerated(true);
     } catch (err: any) {
+      setPdfUnavailable(true);
       setProcessError(err.message || "Error en la conversión a PDF");
     } finally {
       setIsProcessing(false);
@@ -161,6 +166,8 @@ export function useCertificates() {
     // Estados de UI
     isProcessing,
     isMapped,
+    isGenerated,
+    pdfUnavailable,
     pdfUrl,
     processError,
     processWarning,
@@ -172,6 +179,7 @@ export function useCertificates() {
     handleGenerate,
     handleDownload,
     setIsMapped,
+    setIsGenerated,
     setWordGenerated,
     setPdfUrl,
   };
