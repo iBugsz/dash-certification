@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 
 interface Props {
   step3Revealed: boolean;
+  pdfUnavailable?: boolean;
   onPreview: () => void;
   onDownloadPdf: () => void;
   onDownloadWord: () => void;
@@ -19,6 +20,7 @@ interface Props {
 
 export function Step3Success({
   step3Revealed,
+  pdfUnavailable = false,
   onPreview,
   onDownloadPdf,
   onDownloadWord,
@@ -49,8 +51,9 @@ export function Step3Success({
           ¡Documento Listo!
         </h2>
         <p className="text-sm opacity-60 max-w-xs mx-auto">
-          Los archivos se han generado correctamente. Utiliza las opciones de
-          abajo para gestionarlos.
+          {pdfUnavailable
+            ? "El Word se generó correctamente, pero el PDF no está disponible en este momento. Puedes descargar el Word."
+            : "Los archivos se han generado correctamente. Utiliza las opciones de abajo para gestionarlos."}
         </p>
       </div>
 
@@ -66,9 +69,12 @@ export function Step3Success({
       >
         <Button
           onClick={onPreview}
-          title="Vista previa del PDF"
+          disabled={pdfUnavailable}
+          title={
+            pdfUnavailable ? "PDF no disponible" : "Vista previa del PDF"
+          }
           variant="ghost"
-          className="w-12 h-12 rounded-2xl hover:bg-white transition-all cursor-pointer"
+          className="w-12 h-12 rounded-2xl hover:bg-white transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <FileSearch className="w-5 h-5 text-slate-600" />
         </Button>
@@ -77,9 +83,10 @@ export function Step3Success({
 
         <Button
           onClick={onDownloadPdf}
-          title="Descargar en PDF"
+          disabled={pdfUnavailable}
+          title={pdfUnavailable ? "PDF no disponible" : "Descargar en PDF"}
           variant="ghost"
-          className="w-12 h-12 rounded-2xl hover:bg-red-50 transition-all cursor-pointer"
+          className="w-12 h-12 rounded-2xl hover:bg-red-50 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Download className="w-5 h-5 text-red-500" />
         </Button>
